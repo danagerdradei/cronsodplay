@@ -94,3 +94,41 @@ class StaffLoginTests(TestCase):
         self.assertRedirects(self.client.get("/admin/login/?next=/admin/"), "/acceso/?next=/admin/",
                              fetch_redirect_response=False)
         self.assertRedirects(self.client.get("/admin/"), "/admin/login/?next=/admin/", fetch_redirect_response=False)
+
+
+
+class StaffLoginModalTests(TestCase):
+    """Botón "Acceso DJ" con modal en las páginas públicas; las cuentas solo las crea el Admin."""
+
+    def setUp(self):
+        call_command("setup_roles", verbosity=0)
+        self.dj = User.objects.create_user("dj", password="pass12345")
+        self.dj.groups.add(Group.objects.get(name=DJ_GROUP))
+        User.objects.create_superuser("admin", "a@x.com", "pass12345")
+
+    def test_public_pages_show_button_and_modal(self):
+        response = self.client.get(reverse("core:home"))
+        self.assertContains(response, "data-open-staff-login")
+        self.assertContains(response, 'id="staff-login-dialog"')
+        self.assertContains(response, f'action="{reverse("staff_login")}"')
+        self.assertContains(response, "solo las crea el Admin")
+
+    def test_modal_login_works_like_the_access_page(self):
+        response = self.client.post(reverse("staff_login"), {"username": "dj", "password": "pass12345"})
+        self.assertRedirects(response, reverse("dj:panel"))
+
+    def test_logged_in_staff_see_their_panel_link_instead(self):
+        self.client.login(username="dj", password="pass12345")
+        home = self.client.get(reverse("core:home"))
+        self.assertNotContains(home, 'id="staff-login-dialog"')
+        self.assertContains(home, "Mi panel")
+        self.client.login(username="admin", password="pass12345")
+        self.assertContains(self.client.get(reverse("core:home")), reverse("control:dashboard"))
+
+    def test_there_is_no_public_signup(self):
+        from django.urls import NoReverseMatch
+        for name in ("signup", "register", "registro", "dj:signup", "dj:register"):
+            with self.assertRaises(NoReverseMatch):
+                reverse(name)
+        for path in ("/registro/", "/signup/", "/dj/registro/"):
+            self.assertEqual(self.client.get(path).status_code, 404, path)

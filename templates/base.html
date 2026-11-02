@@ -33,9 +33,52 @@
         {% elif GOOGLE_LOGIN_REQUIRED %}
           <a class="btn btn-primary btn-sm" href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">Entrar</a>
         {% endif %}
+        {% if user.is_authenticated and is_platform_admin %}
+          <a class="btn btn-ghost btn-sm staff-btn" href="{% url 'control:dashboard' %}" title="Panel de control">🛡️<span class="staff-btn-label"> Control</span></a>
+        {% elif user.is_authenticated %}
+          <a class="btn btn-ghost btn-sm staff-btn" href="{% url 'dj:panel' %}" title="Mi panel de DJ">🎧<span class="staff-btn-label"> Mi panel</span></a>
+        {% else %}
+          <button type="button" class="btn btn-ghost btn-sm staff-btn" data-open-staff-login aria-haspopup="dialog" title="Acceso DJ">🎧<span class="staff-btn-label"> Acceso DJ</span></button>
+        {% endif %}
       {% endblock %}
     </nav>
   </header>
+
+  {% if not user.is_authenticated %}
+  {# Modal de acceso para DJ / Admin. Los usuarios los crea solo el Admin (no hay registro público). #}
+  <dialog id="staff-login-dialog" class="staff-dialog" aria-labelledby="staff-dialog-title">
+    <form method="post" action="{% url 'staff_login' %}" class="staff-form" novalidate>
+      {% csrf_token %}
+      <div class="staff-dialog-head">
+        <img src="{% static 'img/logo-owl.webp' %}" alt="" width="48" height="48">
+        <div>
+          <p class="eyebrow">Panel de control</p>
+          <h2 id="staff-dialog-title">Acceso DJ · Admin</h2>
+        </div>
+        <button type="button" class="dialog-close" data-close-staff-login aria-label="Cerrar">✕</button>
+      </div>
+      <label class="staff-field" for="modal-username">
+        <span class="staff-label">Usuario</span>
+        <span class="staff-input"><input type="text" id="modal-username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required placeholder="Tu usuario"></span>
+      </label>
+      <label class="staff-field" for="modal-password">
+        <span class="staff-label">Contraseña</span>
+        <span class="staff-input"><input type="password" id="modal-password" name="password" autocomplete="current-password" required placeholder="••••••••"></span>
+      </label>
+      <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+      <p class="hint staff-dialog-foot">¿No tienes usuario? Pídeselo al administrador: las cuentas de DJ solo las crea el Admin.</p>
+    </form>
+  </dialog>
+  <script>
+    (() => {
+      const dialog = document.getElementById("staff-login-dialog");
+      document.querySelectorAll("[data-open-staff-login]").forEach((btn) =>
+        btn.addEventListener("click", () => { dialog.showModal(); dialog.querySelector("#modal-username").focus(); }));
+      dialog.querySelector("[data-close-staff-login]").addEventListener("click", () => dialog.close());
+      dialog.addEventListener("click", (e) => { if (e.target === dialog) dialog.close(); });  // clic fuera = cerrar
+    })();
+  </script>
+  {% endif %}
 
   <main class="container">
     {% if messages %}
