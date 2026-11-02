@@ -1,0 +1,23 @@
+{% load static %}<!doctype html>
+{# Página de error independiente: no hereda base.html ni usa datos de la BD, para funcionar aunque falle todo. #}
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Algo salió mal · Cronso Dplay</title>
+  <link rel="icon" href="{% static 'img/favicon.png' %}" type="image/png">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+  <div class="bg-glow" aria-hidden="true"></div>
+  <main class="container">
+    <section class="card center error-card">
+      <div class="error-icon" aria-hidden="true">🎧</div>
+      <p class="eyebrow">Error del servidor</p>
+      <h1>Algo salió mal</h1>
+      <p class="lead">Estamos ajustando el sonido. Intenta de nuevo en unos segundos.</p>
+      <div class="hero-actions"><a class="btn btn-primary" href="/">Volver al inicio</a></div>
+    </section>
+  </main>
+</body>
+</html>

@@ -37,3 +37,7 @@ urlpatterns += [
     path("", include("apps.core.urls")),
     path("", include("apps.songs.urls")),
 ]
+
+# Páginas de error con el diseño de la app (se usan cuando DEBUG=0, es decir, en producción).
+handler404 = "apps.core.views.page_not_found"
+handler500 = "apps.core.views.server_error"

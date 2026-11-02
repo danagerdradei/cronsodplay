@@ -240,3 +240,26 @@ class DjangoAdminToggleTests(TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertNotContains(response, "Avanzado")
             self.assertEqual(self.client.get(reverse("control:events")).status_code, 200)
+
+    def test_restricted_admin_shows_friendly_notice(self):
+        with self.settings(DJANGO_ADMIN_ENABLED=False):
+            self._reload_urls()
+            response = self.client.get("/admin/")
+            self.assertEqual(response.status_code, 404)
+            self.assertContains(response, "No puedes ingresar a esta sección", status_code=404)
+            self.assertContains(response, reverse("control:dashboard"), status_code=404)
+
+    def test_generic_404_page_has_app_design(self):
+        response = self.client.get("/esta-pagina-no-existe/")
+        self.assertContains(response, "Esta página no existe", status_code=404)
+        self.assertNotContains(response, "No puedes ingresar", status_code=404)
+        self.assertContains(response, "Cronso", status_code=404)
+
+    def test_500_page_renders_without_database(self):
+        from django.test import RequestFactory
+
+        from apps.core.views import server_error
+
+        response = server_error(RequestFactory().get("/"))
+        self.assertEqual(response.status_code, 500)
+        self.assertIn("Algo salió mal", response.content.decode())
