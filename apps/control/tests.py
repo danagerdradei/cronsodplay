@@ -201,3 +201,42 @@ class EnsureAdminCommandTests(TestCase):
         self.assertTrue(admin.check_password("cambiada-456"))  # no pisa la contraseña cambiada
         self.assertTrue(admin.is_active)
         self.assertTrue(admin.groups.filter(name=ADMIN_GROUP).exists())
+
+
+
+class DjangoAdminToggleTests(TestCase):
+    """/admin/ solo existe con DJANGO_ADMIN_ENABLED (local); en producción responde 404."""
+
+    def _reload_urls(self):
+        import importlib
+
+        from django.urls import clear_url_caches
+
+        import config.urls
+
+        clear_url_caches()
+        importlib.reload(config.urls)
+
+    def setUp(self):
+        call_command("setup_roles", verbosity=0)
+        User.objects.create_superuser("admin", "a@x.com", "pass12345")
+        self.client.login(username="admin", password="pass12345")
+
+    def tearDown(self):
+        self._reload_urls()  # vuelve a las URLs normales de las pruebas (admin activo)
+
+    def test_admin_enabled_locally(self):
+        self.assertEqual(self.client.get("/admin/").status_code, 200)
+        self.assertContains(self.client.get(reverse("control:dashboard")), "Avanzado")
+
+    def test_admin_disabled_in_production(self):
+        with self.settings(DJANGO_ADMIN_ENABLED=False):
+            self._reload_urls()
+            self.assertEqual(self.client.get("/admin/").status_code, 404)
+            self.assertEqual(self.client.get("/admin/login/").status_code, 404)
+            self.assertEqual(self.client.get("/admin/songs/guest/").status_code, 404)
+            # El panel de control sigue funcionando, sin el enlace al administrador avanzado
+            response = self.client.get(reverse("control:dashboard"))
+            self.assertEqual(response.status_code, 200)
+            self.assertNotContains(response, "Avanzado")
+            self.assertEqual(self.client.get(reverse("control:events")).status_code, 200)

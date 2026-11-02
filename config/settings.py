@@ -28,6 +28,10 @@ SECRET_KEY = env("DJANGO_SECRET_KEY", "dev-insecure-change-me")
 DEBUG = env_bool("DJANGO_DEBUG", False)
 ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
 CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS", "")
+# Administrador avanzado de Django (/admin/): por defecto solo en local (DEBUG). En producción, 404.
+DJANGO_ADMIN_ENABLED = env_bool("DJANGO_ADMIN_ENABLED", DEBUG)
+if len(sys.argv) > 1 and sys.argv[1] == "test":
+    DJANGO_ADMIN_ENABLED = True  # las pruebas del admin no deben depender del .env
 
 INSTALLED_APPS = [
     "django.contrib.admin",

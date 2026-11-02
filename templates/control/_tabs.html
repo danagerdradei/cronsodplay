@@ -5,7 +5,7 @@
   </div>
   <div class="control-shortcuts">
     <a class="btn btn-ghost btn-sm" href="{% url 'dj:panel' %}">🎵 Cola DJ</a>
-    <a class="btn btn-ghost btn-sm" href="{% url 'admin:index' %}" title="Administrador avanzado de Django">⚙️ Avanzado</a>
+    {% if ADMIN_ENABLED %}<a class="btn btn-ghost btn-sm" href="{% url 'admin:index' %}" title="Administrador avanzado de Django (solo en local)">⚙️ Avanzado</a>{% endif %}
   </div>
 </div>
 <nav class="dj-modules control-tabs" aria-label="Secciones del panel de control">

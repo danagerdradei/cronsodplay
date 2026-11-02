@@ -7,4 +7,5 @@ def app_info(request):
         "APP_NAME": settings.APP_NAME,
         "SONG_MAX_PER_EMAIL": settings.SONG_MAX_PER_EMAIL,
         "QUOTA_SLOTS": range(1, settings.SONG_MAX_PER_EMAIL + 1),
+        "ADMIN_ENABLED": settings.DJANGO_ADMIN_ENABLED,
     }

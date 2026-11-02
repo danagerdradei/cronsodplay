@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin
 from django.http import HttpResponseRedirect
 from django.urls import include, path, reverse
@@ -17,9 +18,18 @@ admin.site.index_title = "Panel de administración"
 
 urlpatterns = [
     path("acceso/", DjLoginView.as_view(), name="staff_login"),  # acceso único DJ + Admin
-    path("admin/login/", admin_login_redirect),
     path("control/", include("apps.control.urls")),  # panel del Admin de la plataforma
-    path("admin/", admin.site.urls),
+]
+
+# El administrador avanzado de Django solo existe si DJANGO_ADMIN_ENABLED está activo
+# (por defecto, solo en local con DEBUG). En producción /admin/ responde 404.
+if settings.DJANGO_ADMIN_ENABLED:
+    urlpatterns += [
+        path("admin/login/", admin_login_redirect),
+        path("admin/", admin.site.urls),
+    ]
+
+urlpatterns += [
     path("", include("apps.events.urls")),  # /e/<código>/ y /dj/eventos/
     path("", include("apps.accounts.urls")),  # /entrar/, /perfil/, /salir/
     path("dj/", include("apps.dj.urls")),
