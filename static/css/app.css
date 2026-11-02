@@ -679,3 +679,10 @@ input, select, textarea, button { max-width: 100%; }
 .error-icon { font-size: 3.6rem; line-height: 1; margin-bottom: .6rem; }
 .error-restricted { border-color: rgba(201, 162, 28, .55); }
 .error-card .lead strong { color: var(--text); }
+
+/* Error dentro del modal de acceso */
+.staff-dialog-error { margin: .2rem 0 0; }
+@keyframes shake { 10%, 90% { transform: translateX(-2px); } 20%, 80% { transform: translateX(4px); }
+  30%, 50%, 70% { transform: translateX(-6px); } 40%, 60% { transform: translateX(6px); } }
+.staff-form.shake { animation: shake .45s ease; }
+@media (prefers-reduced-motion: reduce) { .staff-form.shake { animation: none; } }

@@ -44,7 +44,7 @@
     </nav>
   </header>
 
-  {% if not user.is_authenticated %}
+  {% block staff_modal %}{% if not user.is_authenticated %}
   {# Modal de acceso para DJ / Admin. Los usuarios los crea solo el Admin (no hay registro público). #}
   <dialog id="staff-login-dialog" class="staff-dialog" aria-labelledby="staff-dialog-title">
     <form method="post" action="{% url 'staff_login' %}" class="staff-form" novalidate>
@@ -57,6 +57,7 @@
         </div>
         <button type="button" class="dialog-close" data-close-staff-login aria-label="Cerrar">✕</button>
       </div>
+      <p class="alert alert-error staff-dialog-error" id="staff-dialog-error" role="alert" hidden></p>
       <label class="staff-field" for="modal-username">
         <span class="staff-label">Usuario</span>
         <span class="staff-input"><input type="text" id="modal-username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required placeholder="Tu usuario"></span>
@@ -65,20 +66,57 @@
         <span class="staff-label">Contraseña</span>
         <span class="staff-input"><input type="password" id="modal-password" name="password" autocomplete="current-password" required placeholder="••••••••"></span>
       </label>
-      <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+      <button type="submit" class="btn btn-primary btn-block" data-loading-text="Entrando…">Entrar</button>
       <p class="hint staff-dialog-foot">¿No tienes usuario? Pídeselo al administrador: las cuentas de DJ solo las crea el Admin.</p>
     </form>
   </dialog>
   <script>
     (() => {
       const dialog = document.getElementById("staff-login-dialog");
+      const form = dialog.querySelector("form");
+      const error = document.getElementById("staff-dialog-error");
+      const submit = form.querySelector("button[type=submit]");
+      const user = form.querySelector("#modal-username");
+      const pass = form.querySelector("#modal-password");
+
+      // Código CSRF vigente (cambia al iniciar/cerrar sesión en otra pestaña).
+      const freshCsrf = () => (document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/) || [])[1] || "";
+
+      const showError = (msg) => {
+        error.textContent = msg;
+        error.hidden = false;
+        form.classList.remove("shake"); void form.offsetWidth; form.classList.add("shake");
+        pass.value = ""; pass.focus();
+      };
+
       document.querySelectorAll("[data-open-staff-login]").forEach((btn) =>
-        btn.addEventListener("click", () => { dialog.showModal(); dialog.querySelector("#modal-username").focus(); }));
+        btn.addEventListener("click", () => { error.hidden = true; dialog.showModal(); user.focus(); }));
       dialog.querySelector("[data-close-staff-login]").addEventListener("click", () => dialog.close());
       dialog.addEventListener("click", (e) => { if (e.target === dialog) dialog.close(); });  // clic fuera = cerrar
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (!user.value.trim() || !pass.value) return showError("Escribe tu usuario y tu contraseña.");
+        const token = freshCsrf();
+        form.querySelector("[name=csrfmiddlewaretoken]").value = token || form.querySelector("[name=csrfmiddlewaretoken]").value;
+        submit.disabled = true; const label = submit.textContent; submit.textContent = submit.dataset.loadingText;
+        try {
+          const res = await fetch(form.action, {
+            method: "POST", body: new FormData(form), credentials: "same-origin",
+            headers: { "X-Requested-With": "XMLHttpRequest", "X-CSRFToken": token },
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data.redirect) { location.href = data.redirect; return; }
+          showError(res.status === 403 ? "El formulario expiró. Vuelve a intentarlo." : data.error || "Usuario o contraseña incorrectos.");
+        } catch (_) {
+          showError("Sin conexión. Revisa tu internet e intenta de nuevo.");
+        } finally {
+          submit.disabled = false; submit.textContent = label;
+        }
+      });
     })();
   </script>
-  {% endif %}
+  {% endif %}{% endblock %}
 
   <main class="container">
     {% if messages %}

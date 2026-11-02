@@ -132,3 +132,60 @@ class StaffLoginModalTests(TestCase):
                 reverse(name)
         for path in ("/registro/", "/signup/", "/dj/registro/"):
             self.assertEqual(self.client.get(path).status_code, 404, path)
+
+
+
+class StaffLoginModalAjaxTests(TestCase):
+    """El modal muestra el error ahí mismo y un formulario viejo (CSRF) ve una página amable."""
+
+    AJAX = {"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"}
+
+    def setUp(self):
+        call_command("setup_roles", verbosity=0)
+        self.dj = User.objects.create_user("dj", password="pass12345")
+        self.dj.groups.add(Group.objects.get(name=DJ_GROUP))
+
+    def test_wrong_password_returns_error_for_the_modal(self):
+        response = self.client.post(reverse("staff_login"), {"username": "dj", "password": "mala"}, **self.AJAX)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"], "Usuario o contraseña incorrectos.")
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_empty_fields_return_error_for_the_modal(self):
+        response = self.client.post(reverse("staff_login"), {"username": "", "password": ""}, **self.AJAX)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("usuario", response.json()["error"].lower())
+
+    def test_right_password_returns_redirect_for_the_modal(self):
+        response = self.client.post(reverse("staff_login"), {"username": "dj", "password": "pass12345"}, **self.AJAX)
+        self.assertEqual(response.json(), {"redirect": reverse("dj:panel")})
+        self.assertIn("_auth_user_id", self.client.session)
+
+    def test_access_page_without_ajax_still_shows_message(self):
+        response = self.client.post(reverse("staff_login"), {"username": "dj", "password": "mala"})
+        self.assertContains(response, "Usuario o contraseña incorrectos")
+
+    def test_access_page_does_not_duplicate_the_modal(self):
+        response = self.client.get(reverse("staff_login"))
+        self.assertNotContains(response, 'id="staff-login-dialog"')
+
+    def test_stale_csrf_token_shows_friendly_page(self):
+        from django.test import Client
+        strict = Client(enforce_csrf_checks=True)
+        strict.get(reverse("core:home"))  # recibe una cookie CSRF
+        response = strict.post(reverse("staff_login"),
+                               {"username": "dj", "password": "mala", "csrfmiddlewaretoken": "x" * 64})
+        self.assertEqual(response.status_code, 403)
+        self.assertContains(response, "Tu formulario expiró", status_code=403)
+        self.assertContains(response, "Volver a intentarlo", status_code=403)
+
+    def test_csrf_cookie_value_is_accepted_as_token(self):
+        """El modal envía el valor de la cookie csrftoken: Django debe aceptarlo."""
+        from django.test import Client
+        strict = Client(enforce_csrf_checks=True)
+        strict.get(reverse("core:home"))
+        token = strict.cookies["csrftoken"].value
+        response = strict.post(reverse("staff_login"), {"username": "dj", "password": "pass12345",
+                               "csrfmiddlewaretoken": token}, HTTP_X_CSRFTOKEN=token, **self.AJAX)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["redirect"], reverse("dj:panel"))

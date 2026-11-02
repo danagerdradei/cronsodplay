@@ -17,6 +17,15 @@ def page_not_found(request, exception=None):
     return render(request, "404.html", {"restricted": restricted}, status=404)
 
 
+def csrf_failure(request, reason=""):
+    """
+    403 de CSRF con el diseño de la app. Pasa sobre todo con pestañas viejas: el código de
+    protección del formulario cambió al iniciar o cerrar sesión en otra pestaña.
+    """
+    retry = request.path if request.path.startswith("/") else "/"
+    return render(request, "403_csrf.html", {"retry_url": retry}, status=403)
+
+
 def server_error(request):
     """500 sin consultas a la BD ni procesadores de contexto: debe funcionar aunque la BD esté caída."""
     return HttpResponseServerError(loader.get_template("500.html").render())

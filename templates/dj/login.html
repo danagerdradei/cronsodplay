@@ -3,6 +3,7 @@
 {% block title %}Acceso DJ · Admin · {{ APP_NAME }}{% endblock %}
 {% block body_class %}staff-login-page{% endblock %}
 {% block nav %}{% endblock %}
+{% block staff_modal %}{% endblock %}{# aquí ya está el formulario completo #}
 {% block content %}
 <div class="staff-login">
   <section class="staff-brand" aria-hidden="true">
@@ -67,6 +68,9 @@
       pass.focus();
     });
     document.querySelector(".staff-form").addEventListener("submit", (e) => {
+      // Usa el código CSRF vigente (pudo cambiar al iniciar/cerrar sesión en otra pestaña).
+      const fresh = (document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/) || [])[1];
+      if (fresh) e.target.querySelector("[name=csrfmiddlewaretoken]").value = fresh;
       const btn = e.target.querySelector("button[type=submit]");
       btn.disabled = true; btn.textContent = btn.dataset.loadingText;
     });

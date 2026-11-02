@@ -53,6 +53,22 @@ class DjLoginView(auth_views.LoginView):
 
         return reverse("control:dashboard") if is_platform_admin(self.request.user) else reverse("dj:panel")
 
+    # El modal "Acceso DJ" envía el formulario con fetch: responde JSON para mostrar el error ahí mismo.
+    def _is_ajax(self):
+        return self.request.headers.get("x-requested-with") == "XMLHttpRequest"
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        if self._is_ajax():
+            return JsonResponse({"redirect": response.url})
+        return response
+
+    def form_invalid(self, form):
+        if self._is_ajax():
+            errors = form.non_field_errors() or ["Escribe tu usuario y tu contraseña."]
+            return JsonResponse({"error": " ".join(errors)}, status=400)
+        return super().form_invalid(form)
+
 
 @dj_required
 def panel(request):

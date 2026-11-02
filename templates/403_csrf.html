@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}El formulario expiró · {{ APP_NAME }}{% endblock %}
+{% block content %}
+<section class="card center error-card error-restricted">
+  <div class="error-icon" aria-hidden="true">⏳</div>
+  <p class="eyebrow">Por tu seguridad</p>
+  <h1>Tu formulario expiró</h1>
+  <p class="lead">Parece que la página llevaba un rato abierta o iniciaste/cerraste sesión en otra pestaña.</p>
+  <p class="muted">No pasa nada: vuelve a abrir el formulario y envíalo de nuevo.</p>
+  <div class="hero-actions">
+    <a class="btn btn-primary" href="{{ retry_url }}">🔄 Volver a intentarlo</a>
+    <a class="btn btn-ghost" href="{% url 'core:home' %}">Ir al inicio</a>
+  </div>
+</section>
+{% endblock %}

@@ -151,6 +151,8 @@ STORAGES = {
 }
 
 LOGIN_URL = "staff_login"
+# Página amable cuando el código CSRF de un formulario quedó viejo (p. ej. pestaña abierta hace rato).
+CSRF_FAILURE_VIEW = "apps.core.views.csrf_failure"
 LOGIN_REDIRECT_URL = "dj:panel"
 LOGOUT_REDIRECT_URL = "staff_login"
 
