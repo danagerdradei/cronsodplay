@@ -11,3 +11,6 @@ htmlcov/
 .idea/
 .vscode/
 *.log
+
+# Capturas de pantalla sueltas (no son recursos de la app)
+static/img/WhatsApp Image *

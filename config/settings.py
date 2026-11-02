@@ -7,6 +7,7 @@ Si POSTGRES_HOST no está definido se usa SQLite (útil solo para pruebas rápid
 import os
 import sys
 from pathlib import Path
+from urllib.parse import unquote, urlparse
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -46,6 +47,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "apps.core.middleware.HealthCheckMiddleware",  # primero: /health/ sin HTTPS ni ALLOWED_HOSTS
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -78,7 +80,23 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 # --- Base de datos ---------------------------------------------------------
-if env("POSTGRES_HOST"):
+# DATABASE_URL (Render, Heroku, Railway…) tiene prioridad sobre las variables POSTGRES_*.
+if env("DATABASE_URL"):
+    _db = urlparse(env("DATABASE_URL"))
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": unquote(_db.path.lstrip("/")),
+            "USER": unquote(_db.username or ""),
+            "PASSWORD": unquote(_db.password or ""),
+            "HOST": _db.hostname,
+            "PORT": str(_db.port or 5432),
+            "CONN_MAX_AGE": int(env("POSTGRES_CONN_MAX_AGE", "60")),
+            "CONN_HEALTH_CHECKS": True,
+            "OPTIONS": {"sslmode": env("POSTGRES_SSLMODE", "prefer")},
+        }
+    }
+elif env("POSTGRES_HOST"):
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
