@@ -1,0 +1,9 @@
+# Overrides de DESARROLLO (se aplica automáticamente con `docker compose up`).
+# En producción usar: docker compose -f docker-compose.yml up -d
+services:
+  web:
+    command: python manage.py runserver 0.0.0.0:8000
+    environment:
+      DJANGO_DEBUG: "1"
+    volumes:
+      - .:/app

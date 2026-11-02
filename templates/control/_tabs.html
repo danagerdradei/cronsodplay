@@ -1,0 +1,18 @@
+<div class="control-head">
+  <div>
+    <p class="eyebrow">🛡️ Panel de control · Admin</p>
+    <h1>{% block control_title %}{{ control_title|default:"Control de la plataforma" }}{% endblock %}</h1>
+  </div>
+  <div class="control-shortcuts">
+    <a class="btn btn-ghost btn-sm" href="{% url 'dj:panel' %}">🎵 Cola DJ</a>
+    <a class="btn btn-ghost btn-sm" href="{% url 'admin:index' %}" title="Administrador avanzado de Django">⚙️ Avanzado</a>
+  </div>
+</div>
+<nav class="dj-modules control-tabs" aria-label="Secciones del panel de control">
+  <a href="{% url 'control:dashboard' %}" class="{% if control_tab == 'dashboard' %}active{% endif %}">📊 Resumen</a>
+  <a href="{% url 'control:staff' %}" class="{% if control_tab == 'staff' %}active{% endif %}">🎧 Usuarios DJ y Admin</a>
+  <a href="{% url 'control:people' %}" class="{% if control_tab == 'people' %}active{% endif %}">👥 Personas</a>
+  <a href="{% url 'control:events' %}" class="{% if control_tab == 'events' %}active{% endif %}">🎉 Eventos</a>
+  <a href="{% url 'control:venues' %}" class="{% if control_tab == 'venues' %}active{% endif %}">🏢 Discotecas</a>
+  <a href="{% url 'dj:limits' %}">♻️ Límites</a>
+</nav>

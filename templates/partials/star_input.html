@@ -1,0 +1,15 @@
+{# Selector de 1 a 5 estrellas sin JavaScript. Orden del DOM 5→1 + flex row-reverse para resaltar con "~". #}
+<div class="star-field{% if field.errors %} has-error{% endif %}">
+  <div class="star-text">
+    <span class="star-icon" aria-hidden="true">{{ icon }}</span>
+    <div><strong>{{ title }}</strong>{% if subtitle %}<small class="muted d-block">{{ subtitle }}</small>{% endif %}</div>
+  </div>
+  <div class="star-input" role="radiogroup" aria-label="{{ title }}: de 1 a 5 estrellas">
+    {% for n in "54321" %}
+      <input type="radio" id="{{ field.html_name }}-{{ n }}" name="{{ field.html_name }}" value="{{ n }}"
+             {% if field.value|stringformat:"s" == n %}checked{% endif %}>
+      <label for="{{ field.html_name }}-{{ n }}" title="{{ n }} estrella{{ n|pluralize }}">★</label>
+    {% endfor %}
+  </div>
+  {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+</div>

@@ -1,0 +1,17 @@
+<script>
+  // Alterna entre elegir una discoteca existente y crear una nueva.
+  (() => {
+    const picker = document.querySelector(".venue-picker");
+    const flag = document.getElementById("id_new_venue");
+    const setMode = (mode) => {
+      picker.dataset.mode = mode;
+      flag.value = mode === "new" ? "True" : "False";
+      const focus = picker.querySelector(mode === "new" ? "#id_new_venue_name" : "#id_venue");
+      focus && focus.focus();
+    };
+    picker.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-venue-mode]");
+      if (btn) setMode(btn.dataset.venueMode);
+    });
+  })();
+</script>

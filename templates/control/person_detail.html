@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}{{ guest.display_name }} · {{ APP_NAME }}{% endblock %}
+{% block body_class %}dj control{% endblock %}
+{% block nav %}{% include "dj/_header_nav.html" %}{% endblock %}
+{% block content %}
+{% include "control/_tabs.html" with control_title="Detalle de la persona" %}
+<p><a href="{% url 'control:people' %}">← Personas</a></p>
+
+<section class="card profile-head">
+  {% if guest.picture_url %}<img class="avatar avatar-lg" src="{{ guest.picture_url }}" alt="" width="72" height="72" referrerpolicy="no-referrer">{% else %}<span class="avatar avatar-lg avatar-empty">{{ guest.first_name|first|upper }}</span>{% endif %}
+  <div>
+    <h2 class="person-name">{{ guest.display_name }}</h2>
+    <p class="muted">{{ guest.full_name }}</p>
+    <p class="person-contact">✉️ {{ guest.email }} · 📱 {{ guest.phone|default:"sin celular" }}{% if guest.google_sub %} · <span class="chip">Cuenta de Google</span>{% endif %}</p>
+    <p class="muted">Registrado el {{ guest.created_at|date:"d M Y, h:i A" }}</p>
+  </div>
+</section>
+
+<div class="dj-grid">
+  <section class="card">
+    <h2 class="card-title">♻️ Cupo de canciones</h2>
+    {% if scopes %}
+      <ul class="song-list">
+        {% for s in scopes %}
+          <li class="song-card">
+            <div class="song-main">
+              <strong>{% if s.event %}🎉 {{ s.event.name }}{% else %}Pedidos sin evento{% endif %}</strong>
+              <small class="muted">{% if s.event %}{{ s.event.venue.name }} · {% endif %}usó {{ s.used }} de {{ s.max }}</small>
+            </div>
+            {% if s.remaining %}<span class="badge">{{ s.remaining }} disponible{{ s.remaining|pluralize }}</span>{% else %}<span class="status status-rejected">En el límite</span>{% endif %}
+            {% if s.used %}
+              <form method="post" action="{% url 'control:person_reset' guest.pk %}">
+                {% csrf_token %}<input type="hidden" name="evento" value="{{ s.event.code|default:'' }}">
+                <button class="btn btn-primary btn-sm" type="submit">Restablecer</button>
+              </form>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}<p class="muted">Sin pedidos activos.</p>{% endif %}
+
+    {% if resets %}
+      <h3 class="pq-subtitle">Restablecimientos</h3>
+      <ul class="plain-list">
+        {% for x in resets %}<li>{{ x.created_at|date:"d M, h:i A" }} · {{ x.event.name|default:"Sin evento" }} · {{ x.songs_released }} liberadas · por {{ x.reset_by.username|default:"—" }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+
+    <div class="danger-zone">
+      <h3>Eliminar persona</h3>
+      <p class="hint">Borra su perfil y sus {{ songs|length }} {{ songs|length|pluralize:"canción,canciones" }}. No se puede deshacer. Escribe su correo para confirmar.</p>
+      <form method="post" action="{% url 'control:person_delete' guest.pk %}" class="copy-row">
+        {% csrf_token %}
+        <input type="text" name="confirmar" placeholder="{{ guest.email }}" autocomplete="off" aria-label="Correo para confirmar">
+        <button class="btn btn-danger" type="submit">Eliminar</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 class="card-title">🎵 Canciones pedidas ({{ songs|length }})</h2>
+    {% if songs %}
+      <ul class="song-list">
+        {% for song in songs %}
+          <li class="song-card">
+            {% include "partials/song_thumb.html" %}
+            <div class="song-main">
+              <strong>{{ song.title }}</strong>
+              <span>{{ song.artist }} · {{ song.get_genre_display }}</span>
+              <small class="muted">{% if song.event %}🎉 {{ song.event.name }} · {% endif %}{{ song.venue.name }} · {{ song.created_at|date:"d M, h:i A" }}{% if song.handled_by %} · atendió {{ song.handled_by.username }}{% endif %}{% if not song.counts_toward_limit %} · liberada{% endif %}</small>
+            </div>
+            <span class="status status-{{ song.status }}">{{ song.get_status_display }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}<p class="muted">No ha pedido canciones.</p>{% endif %}
+  </section>
+</div>
+{% endblock %}

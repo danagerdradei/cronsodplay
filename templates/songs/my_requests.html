@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Mis canciones · {{ APP_NAME }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>Mis canciones</h1>
+  <p class="muted">{% if current_guest %}Las canciones que pediste con tu cuenta de Google.{% else %}Escribe tu correo para ver solo las canciones que pediste.{% endif %}</p>
+</section>
+
+{% if not current_guest %}
+<form method="post" class="card form form-inline">
+  {% csrf_token %}
+  {% include "partials/field.html" with field=form.email %}
+  <button type="submit" class="btn btn-primary">Ver</button>
+</form>
+{% endif %}
+
+{% if email %}
+<section class="card">
+  <div class="card-head">
+    <h2 class="card-title">Pedidos de {{ email }}</h2>
+    <form method="post" action="{% url 'songs:forget_me' %}">
+      {% csrf_token %}<button class="link-btn" type="submit">Salir</button>
+    </form>
+  </div>
+
+  {% if songs %}
+    <ul class="song-list">
+      {% for song in songs %}
+        <li class="song-card">
+          {% include "partials/song_thumb.html" %}
+          <div class="song-main">
+            <strong>{{ song.title }}</strong>
+            <span>{{ song.artist }} · {{ song.get_genre_display }}</span>
+            <small class="muted">{{ song.venue.name }} · {{ song.created_at|date:"d M, h:i A" }}</small>
+          </div>
+          <span class="status status-{{ song.status }}">{{ song.get_status_display }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">Aún no tienes canciones con este correo.</p>
+  {% endif %}
+
+  {% if remaining %}
+    <a class="btn btn-primary btn-block" href="{% url 'songs:request' %}">Pedir canción ({{ remaining }} disponible{{ remaining|pluralize }})</a>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

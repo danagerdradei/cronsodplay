@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Eventos · Control · {{ APP_NAME }}{% endblock %}
+{% block body_class %}dj control{% endblock %}
+{% block nav %}{% include "dj/_header_nav.html" %}{% endblock %}
+{% block content %}
+{% include "control/_tabs.html" with control_title="Administrar eventos" %}
+
+<div class="dj-grid events-grid">
+<div class="stack">
+  <section class="card">
+    <details class="create-event" {% if form.errors or not rows %}open{% endif %}>
+      <summary><span class="card-title">➕ Crear evento</span></summary>
+      <form method="post" class="form" id="event-form" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="alert alert-error">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+        {% include "events/_event_form_fields.html" %}
+        <button type="submit" class="btn btn-primary btn-block">🎉 Crear evento y generar QR</button>
+      </form>
+    </details>
+  </section>
+
+  <section class="card reset-card">
+    <h2 class="card-title">♻️ Reiniciar playlist de un evento</h2>
+    <p class="hint card-intro">
+      Borra <strong>todas las canciones</strong> del evento (en cola, sonaron y no disponibles) y sus votos.
+      Cada persona vuelve a tener su cupo completo en ese evento. <strong>El evento, su link y su QR se conservan.</strong>
+    </p>
+    {% if rows %}
+      <form method="post" action="{% url 'control:event_reset' %}" class="form" id="reset-form" novalidate>
+        {% csrf_token %}
+        <div class="form-stack">
+          <div class="field">
+            <label for="reset-event">Evento</label>
+            <select id="reset-event" name="evento" required>
+              <option value="">Elige el evento</option>
+              {% for e in rows %}
+                <option value="{{ e.code }}" data-songs="{{ e.songs }}" {% if selected == e.code %}selected{% endif %}>
+                  {% if e.is_open %}🟢{% else %}⚪{% endif %} {{ e.name }} · {{ e.venue.name }} ({{ e.songs }} {{ e.songs|pluralize:"canción,canciones" }})
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field">
+            <label for="reset-confirm">Escribe el código del evento para confirmar <span id="reset-code" class="muted"></span></label>
+            <input id="reset-confirm" type="text" name="confirmar" autocomplete="off" autocapitalize="characters" placeholder="Ej: GH5NCS">
+          </div>
+        </div>
+        <button class="btn btn-danger btn-block" type="submit" id="reset-btn">♻️ Reiniciar playlist</button>
+        <p class="hint">No se puede deshacer.</p>
+      </form>
+    {% else %}
+      <p class="muted">No hay eventos todavía: créalos arriba.</p>
+    {% endif %}
+  </section>
+</div>
+
+  <section class="card">
+    <div class="card-head">
+      <h2 class="card-title">Eventos ({{ rows|length }})</h2>
+    </div>
+    {% if rows %}
+      <div class="table-wrap">
+      <table class="dj-table events-table">
+        <thead><tr><th>Evento</th><th>Discoteca</th><th class="num">Canciones</th><th class="num">En cola</th><th class="num">Personas</th><th>⭐ Evento</th><th>Estado</th></tr></thead>
+        <tbody>
+          {% for e in rows %}
+            <tr>
+              <td class="ev-name">
+                <strong>{{ e.name }}</strong>
+                <small class="muted d-block">código <code>{{ e.code }}</code> · {{ e.created_at|date:"d M Y" }} · {{ e.max_per_person }} por persona</small>
+                <small class="muted d-block">🎧 {% if e.genre_labels %}{{ e.genre_labels|join:" · " }}{% else %}Todos los géneros{% endif %}</small>
+                <div class="row-actions">
+                  <a class="btn btn-primary btn-sm" href="{% url 'events:dj_playlist' e.code %}">🎵 Playlist</a>
+                  <a class="btn btn-ghost btn-sm" href="{% url 'control:event_edit' e.code %}">✏️ Editar</a>
+                  <a class="btn btn-ghost btn-sm" href="{% url 'events:dj_detail' e.code %}">Link y QR</a>
+                  <form method="post" action="{% url 'control:event_toggle' e.code %}" class="inline">
+                    {% csrf_token %}<button class="btn btn-ghost btn-sm" type="submit">{% if e.is_open %}Cerrar{% else %}Abrir{% endif %}</button>
+                  </form>
+                  {% if e.songs %}<a class="btn btn-ghost btn-sm" href="?evento={{ e.code }}#reset-form">♻️ Reiniciar</a>{% endif %}
+                </div>
+              </td>
+              <td>{{ e.venue.name }}</td>
+              <td class="num">{{ e.songs }}</td>
+              <td class="num">{{ e.pending }}</td>
+              <td class="num">{{ e.people }}</td>
+              <td>{% if e.rating_n %}<span class="rating-badge">★ {{ e.rating|floatformat:1 }} <small>({{ e.rating_n }})</small></span>{% else %}<span class="muted">—</span>{% endif %}</td>
+              <td>{% if e.is_open %}<span class="status status-played">Abierto</span>{% else %}<span class="status status-rejected">Cerrado</span>{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      </div>
+    {% else %}
+      <p class="muted">Sin eventos.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+{% include "events/_event_form_script.html" %}
+<script>
+  (() => {
+    const select = document.getElementById("reset-event");
+    if (!select) return;
+    const confirmInput = document.getElementById("reset-confirm");
+    const hint = document.getElementById("reset-code");
+    const btn = document.getElementById("reset-btn");
+    const sync = () => {
+      const code = select.value;
+      hint.textContent = code ? `(${code})` : "";
+      confirmInput.placeholder = code || "Ej: GH5NCS";
+      btn.disabled = !code || confirmInput.value.trim().toUpperCase() !== code;
+    };
+    select.addEventListener("change", () => { confirmInput.value = ""; sync(); });
+    confirmInput.addEventListener("input", sync);
+    document.getElementById("reset-form").addEventListener("submit", (e) => {
+      const opt = select.selectedOptions[0];
+      if (!confirm(`¿Reiniciar la playlist de "${opt.textContent.trim()}"? Se borrarán ${opt.dataset.songs} canciones.`)) e.preventDefault();
+    });
+    sync();
+  })();
+</script>
+{% endblock %}

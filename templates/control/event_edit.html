@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Editar {{ event.name }} · {{ APP_NAME }}{% endblock %}
+{% block body_class %}dj control{% endblock %}
+{% block nav %}{% include "dj/_header_nav.html" %}{% endblock %}
+{% block content %}
+{% include "control/_tabs.html" with control_title="Editar evento" %}
+<p><a href="{% url 'control:events' %}">← Eventos</a></p>
+
+<div class="dj-grid">
+  <section class="card">
+    <h2 class="card-title">{{ event.name }}
+      {% if event.is_open %}<span class="status status-played">Abierto</span>{% else %}<span class="status status-rejected">Cerrado</span>{% endif %}
+    </h2>
+    <p class="hint card-intro">Código <code>{{ event.code }}</code> · el link y el QR no cambian al editar.</p>
+    <form method="post" class="form" id="event-form" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="alert alert-error">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+      {% include "events/_event_form_fields.html" %}
+      <button type="submit" class="btn btn-primary btn-block">Guardar cambios</button>
+    </form>
+  </section>
+
+  <div class="stack">
+    <section class="card">
+      <h2 class="card-title">Resumen</h2>
+      <div class="stat-row">
+        <div class="stat"><strong>{{ stats.total }}</strong><span>canciones</span></div>
+        <div class="stat"><strong>{{ stats.people }}</strong><span>personas</span></div>
+      </div>
+      <div class="hero-actions left">
+        <a class="btn btn-primary" href="{% url 'events:dj_playlist' event.code %}">🎵 Playlist</a>
+        <a class="btn btn-ghost" href="{% url 'events:dj_detail' event.code %}">🔗 Link y QR</a>
+        <form method="post" action="{% url 'control:event_toggle' event.code %}">
+          {% csrf_token %}<input type="hidden" name="volver" value="{{ request.path }}">
+          <button class="btn btn-ghost" type="submit">{% if event.is_open %}🔒 Cerrar evento{% else %}🔓 Abrir evento{% endif %}</button>
+        </form>
+        {% if stats.total %}<a class="btn btn-ghost" href="{% url 'control:events' %}?evento={{ event.code }}#reset-form">♻️ Reiniciar playlist</a>{% endif %}
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="danger-zone no-margin">
+        <h3>Eliminar evento</h3>
+        <p class="hint">Borra el evento, su link, su QR y sus {{ stats.total }} {{ stats.total|pluralize:"canción,canciones" }}. No se puede deshacer. Escribe el código <code>{{ event.code }}</code> para confirmar.</p>
+        <form method="post" action="{% url 'control:event_delete' event.code %}" class="copy-row">
+          {% csrf_token %}
+          <input type="text" name="confirmar" placeholder="{{ event.code }}" autocomplete="off" aria-label="Código para confirmar">
+          <button class="btn btn-danger" type="submit">Eliminar</button>
+        </form>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}{% include "events/_event_form_script.html" %}{% endblock %}

@@ -1,0 +1,58 @@
+{# Cola pública con estrellas. Requiere `venue` opcional y cargar static/js/public-queue.js. #}
+<aside id="public-queue" class="card queue-side"
+       data-url="{% url 'songs:public_queue' %}"
+       data-rate-url="{% url 'songs:rate_song' 0 %}"
+       data-venue="{{ venue.slug|default:'' }}"
+       data-event="{{ event.code|default:'' }}"
+       data-poll="15">
+  {% csrf_token %}
+  <div class="pq-head">
+    <div>
+      <h2 class="pq-heading">Cola de canciones</h2>
+      <p class="muted pq-sub" id="pq-venue-label">{% if event %}{{ event.name }} · {{ venue.name }}{% elif venue %}{{ venue.name }}{% else %}Todas las discotecas{% endif %}</p>
+    </div>
+    <span class="pq-badge"><strong id="pq-count">0</strong> en cola</span>
+  </div>
+  <p class="hint pq-hint">Puntúa de 1 a 5 estrellas lo que va pidiendo la gente.</p>
+
+  <table class="pq-table">
+    <thead>
+      <tr><th class="c-pos">#</th><th>Canción</th><th class="c-by">Pedida por</th><th class="c-link">Link</th><th class="c-rate">Puntuación</th></tr>
+    </thead>
+    <tbody id="pq-list"></tbody>
+  </table>
+  <p id="pq-empty" class="muted pq-empty" hidden>Aún no hay canciones en cola. ¡Sé el primero en pedir!</p>
+
+  <div id="pq-played-wrap" hidden>
+    <h3 class="pq-subtitle">Ya sonaron</h3>
+    <table class="pq-table pq-played"><tbody id="pq-played"></tbody></table>
+  </div>
+</aside>
+
+<template id="pq-tpl">
+  <tr class="pq-row">
+    <td class="c-pos"><span class="pq-pos"></span></td>
+    <td class="c-song">
+      <div class="pq-song">
+        <span class="song-thumb song-thumb-empty pq-thumb" aria-hidden="true">♪</span>
+        <div class="pq-text">
+          <strong class="pq-title"></strong>
+          <span class="pq-artist"></span>
+          <small class="pq-venue muted" hidden></small>
+        </div>
+      </div>
+    </td>
+    <td class="c-by"><span class="pq-by"></span></td>
+    <td class="c-link"><a class="pq-link" target="_blank" rel="noopener" hidden></a><span class="pq-nolink muted">—</span></td>
+    <td class="c-rate">
+      <div class="stars" role="group" aria-label="Puntuar de 1 a 5 estrellas">
+        <button type="button" data-stars="5" aria-label="5 estrellas">★</button>
+        <button type="button" data-stars="4" aria-label="4 estrellas">★</button>
+        <button type="button" data-stars="3" aria-label="3 estrellas">★</button>
+        <button type="button" data-stars="2" aria-label="2 estrellas">★</button>
+        <button type="button" data-stars="1" aria-label="1 estrella">★</button>
+      </div>
+      <small class="pq-avg muted"></small>
+    </td>
+  </tr>
+</template>

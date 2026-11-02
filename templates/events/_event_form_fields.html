@@ -1,0 +1,33 @@
+{# Campos del formulario de evento: nombre, discoteca (existente o nueva), cupo y géneros. #}
+      {{ form.new_venue }}
+      <div class="form-stack">
+        {% include "partials/field.html" with field=form.name %}
+
+        <div class="venue-picker" data-mode="{% if form.creating_venue %}new{% else %}existing{% endif %}">
+          <div class="venue-existing">
+            {% include "partials/field.html" with field=form.venue required=True %}
+            <button type="button" class="link-btn add-venue" data-venue-mode="new">➕ Nueva discoteca / bar</button>
+          </div>
+          <div class="venue-new">
+            <div class="venue-new-head">
+              <strong>Nueva discoteca / bar</strong>
+              <button type="button" class="link-btn" data-venue-mode="existing">Elegir una existente</button>
+            </div>
+            {% include "partials/field.html" with field=form.new_venue_name required=True %}
+            {% include "partials/field.html" with field=form.new_venue_city %}
+          </div>
+        </div>
+
+        {% include "partials/field.html" with field=form.max_per_person %}
+
+        <fieldset class="genre-picker">
+          <legend>{{ form.allowed_genres.label }} <span class="opt">(opcional)</span></legend>
+          <p class="hint">{{ form.allowed_genres.help_text }}</p>
+          <div class="genre-grid">
+            {% for opt in form.allowed_genres %}
+              <label class="genre-chip">{{ opt.tag }}<span>{{ opt.choice_label }}</span></label>
+            {% endfor %}
+          </div>
+          {% for error in form.allowed_genres.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </fieldset>
+      </div>

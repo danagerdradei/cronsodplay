@@ -1,0 +1,340 @@
+from django.contrib.auth.models import Group, User
+from django.core.management import call_command
+from django.test import TestCase, override_settings
+from django.urls import reverse
+
+from apps.dj.permissions import DJ_GROUP
+from apps.dj.serializers import mask_email
+from apps.songs.models import Guest, LimitReset, SongRequest
+from apps.venues.models import Venue
+
+from .models import CODE_ALPHABET, Event
+
+
+def guest_data(email="ana@x.com", **extra):
+    return {"first_name": "Ana", "last_name": "Ruiz", "alias": "", "phone": "3001234567", "email": email, **extra}
+
+
+@override_settings(SONG_MAX_PER_EMAIL=3, SONG_MAX_PER_DEVICE=3, SONG_MAX_PER_IP=100, YOUTUBE_API_KEY="")
+class EventTests(TestCase):
+    def setUp(self):
+        call_command("setup_roles", verbosity=0)
+        self.venue = Venue.objects.create(name="Cronso Club")
+        self.dj = User.objects.create_user("dj", password="pass12345")
+        self.dj.groups.add(Group.objects.get(name=DJ_GROUP))
+        self.event = Event.objects.create(name="Viernes Urbano", venue=self.venue, max_per_person=2, dj=self.dj)
+
+    def post(self, event, title, email="ana@x.com", client=None):
+        data = {**guest_data(email), "venue": self.venue.pk, "title": title, "artist": "X", "genre": "pop",
+                "venue_stars": 5, "event_stars": 5, "dj_stars": 5}
+        return (client or self.client).post(event.get_absolute_url(), data)
+
+    def test_code_is_short_and_readable(self):
+        self.assertEqual(len(self.event.code), 6)
+        self.assertTrue(set(self.event.code) <= set(CODE_ALPHABET))
+        self.assertTrue(self.event.public_url.endswith(f"/e/{self.event.code}/"))
+
+    def test_event_link_shows_form_with_venue_and_event_limit(self):
+        response = self.client.get(self.event.get_absolute_url())
+        self.assertContains(response, "Viernes Urbano")
+        self.assertContains(response, f'<input type="hidden" name="venue" value="{self.venue.pk}">', html=True)
+        self.assertContains(response, "de 2</span>")
+        self.assertContains(self.client.get(f"/e/{self.event.code.lower()}/"), "Viernes Urbano")  # sin mayúsculas
+
+    def test_requests_are_attached_to_event_and_use_event_limit(self):
+        self.assertEqual(self.post(self.event, "Uno").status_code, 302)
+        self.assertEqual(self.post(self.event, "Dos").status_code, 302)
+        self.assertContains(self.post(self.event, "Tres"), "Gracias por tu buena energía")
+        self.assertEqual(SongRequest.objects.filter(event=self.event).count(), 2)
+
+    def test_new_event_gives_a_fresh_quota_and_allows_same_song(self):
+        self.post(self.event, "Uno")
+        self.post(self.event, "Dos")
+        saturday = Event.objects.create(name="Sábado", venue=self.venue, max_per_person=2)
+        self.assertEqual(self.post(saturday, "Uno").status_code, 302)  # misma canción, otra noche
+
+    def test_closed_event_does_not_accept_requests(self):
+        self.event.is_open = False
+        self.event.save()
+        self.assertContains(self.client.get(self.event.get_absolute_url()), "ya terminó", status_code=410)
+        self.assertEqual(self.post(self.event, "Uno").status_code, 410)
+        self.assertFalse(SongRequest.objects.exists())
+
+    def test_qr_png_and_svg(self):
+        png = self.client.get(reverse("events:qr", args=[self.event.code]) + "?formato=png&descargar=1")
+        self.assertEqual(png["Content-Type"], "image/png")
+        self.assertIn("attachment", png["Content-Disposition"])
+        svg = self.client.get(reverse("events:qr", args=[self.event.code]))
+        self.assertEqual(svg["Content-Type"], "image/svg+xml")
+        self.assertIn(b'xmlns="http://www.w3.org/2000/svg"', svg.content)  # sin esto no se ve en <img>
+        venue_svg = self.client.get(reverse("venues:qr_svg", args=[self.venue.slug]))
+        self.assertIn(b'xmlns="http://www.w3.org/2000/svg"', venue_svg.content)
+
+    def test_dj_creates_event_and_gets_share_page(self):
+        self.client.login(username="dj", password="pass12345")
+        response = self.client.post(
+            reverse("events:dj_list"), {"name": "Sábado Salsa", "venue": self.venue.pk, "max_per_person": 4}
+        )
+        event = Event.objects.get(name="Sábado Salsa")
+        self.assertRedirects(response, reverse("events:dj_detail", args=[event.code]))
+        detail = self.client.get(response["Location"])
+        self.assertContains(detail, event.public_url)
+        self.assertContains(detail, "wa.me")
+        self.assertEqual(event.dj, self.dj)
+
+    def test_dj_closes_event(self):
+        self.client.login(username="dj", password="pass12345")
+        self.client.post(reverse("events:dj_toggle", args=[self.event.code]))
+        self.event.refresh_from_db()
+        self.assertFalse(self.event.is_open)
+
+    def test_event_pages_require_dj(self):
+        self.assertEqual(self.client.get(reverse("events:dj_list")).status_code, 302)
+        self.assertEqual(self.client.post(reverse("events:dj_toggle", args=[self.event.code])).status_code, 302)
+
+    def test_public_and_dj_queues_filter_by_event(self):
+        self.post(self.event, "Del evento")
+        self.client.post(reverse("songs:request_for_venue", args=[self.venue.slug]),
+                         {**guest_data("b@x.com"), "venue": self.venue.pk, "title": "Sin evento", "artist": "X",
+                          "genre": "pop"})
+        public = self.client.get(reverse("songs:public_queue") + f"?event={self.event.code}").json()
+        self.assertEqual([s["title"] for s in public["pending"]], ["Del evento"])
+        self.assertEqual(public["event"]["name"], "Viernes Urbano")
+        self.client.login(username="dj", password="pass12345")
+        dj = self.client.get(reverse("dj:api_requests") + f"?event={self.event.code}").json()
+        self.assertEqual([s["title"] for s in dj["results"]], ["Del evento"])
+        self.assertEqual(dj["results"][0]["event"], "Viernes Urbano")
+
+
+@override_settings(SONG_MAX_PER_EMAIL=3, SONG_MAX_PER_DEVICE=3, SONG_MAX_PER_IP=100, YOUTUBE_API_KEY="")
+class LimitResetTests(TestCase):
+    def setUp(self):
+        call_command("setup_roles", verbosity=0)
+        self.venue = Venue.objects.create(name="Cronso Club")
+        self.event = Event.objects.create(name="Viernes", venue=self.venue, max_per_person=2)
+        self.dj = User.objects.create_user("dj", password="pass12345", first_name="DJ Demo")
+        self.dj.groups.add(Group.objects.get(name=DJ_GROUP))
+        self.phone = self.client_class()  # dispositivo del asistente
+        for title in ("Uno", "Dos"):
+            self.phone.post(self.event.get_absolute_url(),
+                            {**guest_data("elputres@hotmail.com", alias="Elputrefacto"), "venue": self.venue.pk,
+                             "title": title, "artist": "X", "genre": "pop", "venue_stars": 5, "event_stars": 5, "dj_stars": 5})
+        self.guest = Guest.objects.get(email="elputres@hotmail.com")
+        self.client.login(username="dj", password="pass12345")
+
+    def test_mask_email(self):
+        self.assertEqual(mask_email("elputres@hotmail.com"), "el******@hotmail.com")
+        self.assertEqual(mask_email("ab@x.com"), "a***@x.com")
+
+    def test_lists_people_at_limit_with_masked_email(self):
+        response = self.client.get(reverse("dj:limits") + f"?evento={self.event.code}")
+        self.assertContains(response, "Elputrefacto")
+        self.assertContains(response, "el******@hotmail.com")
+        self.assertNotContains(response, "elputres@hotmail.com")
+        self.assertNotContains(response, "3001234567")
+
+    def test_search_by_email_name_or_alias(self):
+        for q in ("elputres@hotmail", "Ana", "putrefacto"):
+            response = self.client.get(reverse("dj:limits") + f"?evento={self.event.code}&q={q}")
+            self.assertContains(response, "Elputrefacto", msg_prefix=q)
+        self.assertContains(self.client.get(reverse("dj:limits") + f"?evento={self.event.code}&q=nadie"),
+                            "No se encontró")
+
+    def test_reset_lets_the_person_request_again_and_keeps_songs_in_queue(self):
+        response = self.client.post(reverse("dj:reset_limit", args=[self.guest.pk]), {"evento": self.event.code})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(SongRequest.objects.filter(guest=self.guest, status="pending").count(), 2)
+        reset = LimitReset.objects.get()
+        self.assertEqual((reset.songs_released, reset.reset_by, reset.event), (2, self.dj, self.event))
+        # Mismo celular, mismo correo: ya puede pedir de nuevo (se liberó también el dispositivo).
+        again = self.phone.post(self.event.get_absolute_url(),
+                                {**guest_data("elputres@hotmail.com"), "venue": self.venue.pk,
+                                 "title": "Tres", "artist": "X", "genre": "pop"})
+        self.assertEqual(again.status_code, 302)
+
+    def test_limits_page_requires_dj(self):
+        self.client.logout()
+        self.assertEqual(self.client.get(reverse("dj:limits")).status_code, 302)
+        self.assertEqual(self.client.post(reverse("dj:reset_limit", args=[self.guest.pk])).status_code, 302)
+        self.assertFalse(LimitReset.objects.exists())
+
+
+class CreateVenueFromEventTests(TestCase):
+    def setUp(self):
+        call_command("setup_roles", verbosity=0)
+        Venue.objects.create(name="Cronso Club")
+        dj = User.objects.create_user("dj", password="pass12345")
+        dj.groups.add(Group.objects.get(name=DJ_GROUP))
+        self.client.login(username="dj", password="pass12345")
+
+    def create(self, **data):
+        return self.client.post(reverse("events:dj_list"), {"name": "Noche", "max_per_person": 3, **data})
+
+    def test_dj_creates_new_venue_with_event(self):
+        response = self.create(new_venue="True", new_venue_name="  La Terraza   Club ", new_venue_city="Medellín")
+        venue = Venue.objects.get(name="La Terraza Club")
+        self.assertEqual((venue.city, venue.slug, venue.is_active), ("Medellín", "la-terraza-club", True))
+        event = Event.objects.get()
+        self.assertEqual(event.venue, venue)
+        self.assertRedirects(response, reverse("events:dj_detail", args=[event.code]))
+
+    def test_existing_name_is_reused_not_duplicated(self):
+        self.create(new_venue="True", new_venue_name="cronso CLUB")
+        self.assertEqual(Venue.objects.count(), 1)
+        self.assertEqual(Event.objects.get().venue.name, "Cronso Club")
+
+    def test_new_venue_requires_name_and_existing_requires_choice(self):
+        self.assertContains(self.create(new_venue="True", new_venue_name=""), "Escribe el nombre de la discoteca")
+        self.assertContains(self.create(), "Elige la discoteca o crea una nueva")
+        self.assertFalse(Event.objects.exists())
+
+    def test_similar_names_get_unique_slugs(self):
+        # "Cronso-Club!" en el formulario se reutilizaría (mismo nombre normalizado); en el modelo
+        # dos nombres distintos con el mismo slug reciben un sufijo.
+        self.assertEqual(Venue.objects.create(name="Cronso-Club!").slug, "cronso-club-2")
+
+    def test_form_shows_new_venue_fields_when_there_are_no_venues(self):
+        Venue.objects.all().delete()
+        response = self.client.get(reverse("events:dj_list"))
+        self.assertContains(response, 'data-mode="new"')
+
+
+@override_settings(SONG_MAX_PER_EMAIL=3, SONG_MAX_PER_DEVICE=0, SONG_MAX_PER_IP=0, YOUTUBE_API_KEY="")
+class EventGenreTests(TestCase):
+    def setUp(self):
+        self.venue = Venue.objects.create(name="Cronso Club")
+        self.event = Event.objects.create(name="Noche Latina", venue=self.venue,
+                                          allowed_genres=["reggaeton", "salsa"])
+
+    def post(self, genre, event=None, title="Uno"):
+        data = {**guest_data(), "venue": self.venue.pk, "title": title, "artist": "X", "genre": genre}
+        return self.client.post((event or self.event).get_absolute_url(), data)
+
+    def test_form_shows_banner_and_only_allowed_genres(self):
+        response = self.client.get(self.event.get_absolute_url())
+        self.assertContains(response, "Esta noche el DJ toca")
+        options = response.context["form"].fields["genre"].choices
+        self.assertEqual([c for c, _ in options], ["", "reggaeton", "salsa"])
+
+    def test_disallowed_genre_is_rejected_with_clear_message(self):
+        response = self.post("rock")
+        self.assertContains(response, "Este evento es solo de Reggaetón y Salsa")
+        self.assertFalse(SongRequest.objects.exists())
+
+    def test_allowed_genre_is_accepted(self):
+        self.assertEqual(self.post("salsa").status_code, 302)
+
+    def test_event_without_genres_accepts_any(self):
+        open_event = Event.objects.create(name="Libre", venue=self.venue)
+        self.assertEqual(self.post("rock", event=open_event).status_code, 302)
+
+    def test_service_also_enforces_genres(self):
+        from apps.songs.services import GenreNotAllowed, register_song_request
+        with self.assertRaises(GenreNotAllowed):
+            register_song_request(
+                guest_data=guest_data(), event=self.event,
+                song_data={"venue": self.venue, "title": "Y", "artist": "X", "genre": "pop", "reference_url": ""},
+            )
+
+    def test_dj_creates_event_with_genres(self):
+        call_command("setup_roles", verbosity=0)
+        dj = User.objects.create_user("dj", password="pass12345")
+        dj.groups.add(Group.objects.get(name=DJ_GROUP))
+        self.client.login(username="dj", password="pass12345")
+        self.client.post(reverse("events:dj_list"), {
+            "name": "Electro", "venue": self.venue.pk, "max_per_person": 3,
+            "allowed_genres": ["electronica", "house"],
+        })
+        event = Event.objects.get(name="Electro")
+        self.assertEqual(event.allowed_genres, ["electronica", "house"])
+        self.assertContains(self.client.get(reverse("events:dj_detail", args=[event.code])), "House / Tech House")
+
+
+class EventViewsByRoleTests(TestCase):
+    """El Admin administra todos los eventos en /control/eventos/; el DJ solo ve y comparte los suyos."""
+
+    def setUp(self):
+        call_command("setup_roles", verbosity=0)
+        self.venue = Venue.objects.create(name="Cronso Club")
+        self.dj = User.objects.create_user("dj", password="pass12345")
+        self.other_dj = User.objects.create_user("otro", password="pass12345")
+        for user in (self.dj, self.other_dj):
+            user.groups.add(Group.objects.get(name=DJ_GROUP))
+        User.objects.create_superuser("admin", "a@x.com", "pass12345")
+        self.mine = Event.objects.create(name="Mi Noche", venue=self.venue, dj=self.dj)
+        self.theirs = Event.objects.create(name="Noche Ajena", venue=self.venue, dj=self.other_dj)
+
+    def test_admin_is_sent_to_control_events(self):
+        self.client.login(username="admin", password="pass12345")
+        self.assertRedirects(self.client.get(reverse("events:dj_list")), reverse("control:events"))
+        # El Admin sí puede abrir el link/QR de cualquier evento
+        self.assertEqual(self.client.get(reverse("events:dj_detail", args=[self.theirs.code])).status_code, 200)
+
+    def test_dj_sees_only_own_events(self):
+        self.client.login(username="dj", password="pass12345")
+        response = self.client.get(reverse("events:dj_list"))
+        self.assertContains(response, "Mi Noche")
+        self.assertNotContains(response, "Noche Ajena")
+        self.assertContains(response, "Mis eventos")
+
+    def test_dj_cannot_manage_other_djs_events(self):
+        self.client.login(username="dj", password="pass12345")
+        self.assertEqual(self.client.get(reverse("events:dj_detail", args=[self.theirs.code])).status_code, 404)
+        self.assertEqual(self.client.post(reverse("events:dj_toggle", args=[self.theirs.code])).status_code, 404)
+        self.theirs.refresh_from_db()
+        self.assertTrue(self.theirs.is_open)
+        self.assertEqual(self.client.get(reverse("events:dj_print", args=[self.theirs.code])).status_code, 404)
+
+    def test_dj_cannot_use_admin_event_tools(self):
+        self.client.login(username="dj", password="pass12345")
+        self.assertEqual(self.client.get(reverse("control:events")).status_code, 403)
+        self.assertEqual(self.client.get(reverse("control:event_edit", args=[self.mine.code])).status_code, 403)
+        response = self.client.post(reverse("control:event_reset"), {"evento": self.mine.code, "confirmar": self.mine.code})
+        self.assertEqual(response.status_code, 403)
+
+
+
+class EventPlaylistPageTests(TestCase):
+    """Cada evento tiene su página de playlist: la ve el DJ dueño y el Admin."""
+
+    def setUp(self):
+        call_command("setup_roles", verbosity=0)
+        self.venue = Venue.objects.create(name="ClorofilaTaller")
+        self.dj = User.objects.create_user("dj", password="pass12345")
+        self.other = User.objects.create_user("otro", password="pass12345")
+        for user in (self.dj, self.other):
+            user.groups.add(Group.objects.get(name=DJ_GROUP))
+        User.objects.create_superuser("admin", "a@x.com", "pass12345")
+        self.event = Event.objects.create(name="NaviRapas", venue=self.venue, dj=self.dj, allowed_genres=["hiphop"])
+        self.url = reverse("events:dj_playlist", args=[self.event.code])
+
+    def test_owner_dj_sees_the_event_playlist(self):
+        self.client.login(username="dj", password="pass12345")
+        response = self.client.get(self.url)
+        self.assertContains(response, "Playlist del evento")
+        self.assertContains(response, "NaviRapas")
+        self.assertContains(response, f'data-fixed-event="{self.event.code}"')
+        self.assertNotContains(response, 'id="event-filter"')  # sin selectores: el evento es fijo
+        self.assertNotContains(response, "♻️ Reiniciar")       # herramientas del Admin ocultas
+
+    def test_other_dj_cannot_open_it(self):
+        self.client.login(username="otro", password="pass12345")
+        self.assertEqual(self.client.get(self.url).status_code, 404)
+
+    def test_admin_sees_it_with_admin_tools(self):
+        self.client.login(username="admin", password="pass12345")
+        response = self.client.get(self.url)
+        self.assertContains(response, "NaviRapas")
+        self.assertContains(response, "♻️ Reiniciar")
+        self.assertContains(response, reverse("control:event_edit", args=[self.event.code]))
+
+    def test_requires_login(self):
+        self.assertEqual(self.client.get(self.url).status_code, 302)
+
+    def test_playlist_links_everywhere(self):
+        self.client.login(username="dj", password="pass12345")
+        self.assertContains(self.client.get(reverse("events:dj_list")), self.url)
+        self.assertContains(self.client.get(reverse("events:dj_detail", args=[self.event.code])), self.url)
+        self.client.login(username="admin", password="pass12345")
+        self.assertContains(self.client.get(reverse("control:events")), self.url)
+        self.assertContains(self.client.get(reverse("control:event_edit", args=[self.event.code])), self.url)

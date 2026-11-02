@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Discotecas · {{ APP_NAME }}{% endblock %}
+{% block body_class %}dj control{% endblock %}
+{% block nav %}{% include "dj/_header_nav.html" %}{% endblock %}
+{% block content %}
+{% include "control/_tabs.html" with control_title="Discotecas y bares" %}
+
+<div class="dj-grid">
+  <section class="card">
+    <h2 class="card-title">➕ Nueva discoteca / bar</h2>
+    <form method="post" class="form" novalidate>
+      {% csrf_token %}
+      <div class="form-stack">
+        {% include "partials/field.html" with field=form.name %}
+        {% include "partials/field.html" with field=form.city %}
+      </div>
+      <button class="btn btn-primary btn-block" type="submit">Crear</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2 class="card-title">Discotecas ({{ rows|length }})</h2>
+    <table class="dj-table">
+      <thead><tr><th>Nombre</th><th>Ciudad</th><th class="num">Pedidos</th><th class="num">Eventos</th><th>Estado</th><th></th></tr></thead>
+      <tbody>
+        {% for v in rows %}
+          <tr>
+            <td><strong>{{ v.name }}</strong><small class="muted d-block">/v/{{ v.slug }}/</small></td>
+            <td>{{ v.city|default:"—" }}</td>
+            <td class="num">{{ v.songs }}</td>
+            <td class="num">{{ v.events_n }}</td>
+            <td>{% if v.is_active %}<span class="status status-played">Activa</span>{% else %}<span class="status status-rejected">Inactiva</span>{% endif %}</td>
+            <td class="actions">
+              <a class="btn btn-ghost btn-sm" href="{% url 'venues:qr_print' v.slug %}" target="_blank">QR</a>
+              <form method="post" action="{% url 'control:venue_toggle' v.pk %}" class="inline">
+                {% csrf_token %}<button class="btn btn-ghost btn-sm" type="submit">{% if v.is_active %}Desactivar{% else %}Activar{% endif %}</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}¡Canción enviada! · {{ APP_NAME }}{% endblock %}
+{% block body_class %}wide{% endblock %}
+{% block content %}
+<div class="request-layout">
+<section class="card center celebrate">
+  <div class="big-emoji" aria-hidden="true">🎉</div>
+  <h1>¡Listo, {{ song.guest.display_name }}!</h1>
+  <p class="lead">Tu canción ya está en la lista del DJ.</p>
+
+  <div class="song-card">
+    {% include "partials/song_thumb.html" %}
+    <div class="song-main">
+      <strong>{{ song.title }}</strong>
+      <span>{{ song.artist }}</span>
+    </div>
+    <span class="badge">{{ song.get_genre_display }}</span>
+  </div>
+
+  <p class="muted">Posición en la cola de {{ song.venue.name }}: <strong>#{{ position }}</strong></p>
+
+  {% if remaining > 0 %}
+    <p>Te quedan <strong>{{ remaining }}</strong> {{ remaining|pluralize:"canción,canciones" }} por pedir.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="{% if event %}{{ event.get_absolute_url }}{% else %}{% url 'songs:request_for_venue' song.venue.slug %}{% endif %}">Pedir otra</a>
+      <a class="btn btn-ghost" href="{% url 'songs:my_requests' %}">Mis canciones</a>
+    </div>
+  {% else %}
+    <p>Ya usaste tus {{ max_songs }} pedidos. ¡Ahora a disfrutar la pista! 💃🕺</p>
+    <a class="btn btn-ghost" href="{% url 'songs:my_requests' %}">Ver mis canciones</a>
+  {% endif %}
+</section>
+
+{% include "partials/public_queue.html" with venue=song.venue event=event %}
+</div>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/platform.js' %}" defer></script><script src="{% static 'js/public-queue.js' %}" defer></script>{% endblock %}

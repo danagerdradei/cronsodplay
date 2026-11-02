@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Evento finalizado · {{ APP_NAME }}{% endblock %}
+{% block content %}
+<section class="card center">
+  <div class="big-emoji" aria-hidden="true">🌙</div>
+  <h1>{{ event.name }} ya terminó</h1>
+  <p class="lead">Este evento ya no está recibiendo pedidos. ¡Gracias por acompañarnos en {{ event.venue.name }}!</p>
+  <p class="muted">Pídele al DJ el QR del evento de hoy para pedir tu canción.</p>
+  <a class="btn btn-ghost" href="{% url 'songs:my_requests' %}">Ver mis canciones</a>
+</section>
+{% endblock %}

@@ -1,0 +1,136 @@
+{
+  "family": "cronso-dplay-web",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "512",
+  "memory": "1024",
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "executionRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/cronso-dplay-ecs-execution",
+  "taskRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/cronso-dplay-ecs-task",
+  "containerDefinitions": [
+    {
+      "name": "web",
+      "image": "<REEMPLAZADO_POR_CI>",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "DJANGO_DEBUG",
+          "value": "0"
+        },
+        {
+          "name": "DJANGO_ALLOWED_HOSTS",
+          "value": "dplay.cronso.com"
+        },
+        {
+          "name": "DJANGO_CSRF_TRUSTED_ORIGINS",
+          "value": "https://dplay.cronso.com"
+        },
+        {
+          "name": "PUBLIC_BASE_URL",
+          "value": "https://dplay.cronso.com"
+        },
+        {
+          "name": "POSTGRES_PORT",
+          "value": "5432"
+        },
+        {
+          "name": "SONG_MAX_PER_EMAIL",
+          "value": "3"
+        },
+        {
+          "name": "SONG_LIMIT_WINDOW_HOURS",
+          "value": "0"
+        },
+        {
+          "name": "SONG_MAX_PER_DEVICE",
+          "value": "3"
+        },
+        {
+          "name": "SONG_MAX_PER_IP",
+          "value": "15"
+        },
+        {
+          "name": "SONG_IP_WINDOW_HOURS",
+          "value": "12"
+        },
+        {
+          "name": "SONG_IP_ALLOWLIST",
+          "value": ""
+        },
+        {
+          "name": "TRUSTED_PROXY_COUNT",
+          "value": "2"
+        },
+        {
+          "name": "YOUTUBE_SEARCH_FALLBACK",
+          "value": "1"
+        },
+        {
+          "name": "YOUTUBE_COMMENTS_MAX",
+          "value": "100"
+        },
+        {
+          "name": "YOUTUBE_CACHE_HOURS",
+          "value": "24"
+        },
+        {
+          "name": "ENRICH_ASYNC",
+          "value": "1"
+        },
+        {
+          "name": "GOOGLE_CLIENT_ID",
+          "value": "<ID_DE_CLIENTE>.apps.googleusercontent.com"
+        },
+        {
+          "name": "GOOGLE_LOGIN_REQUIRED",
+          "value": "1"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "DJANGO_SECRET_KEY",
+          "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:cronso-dplay/django:SECRET_KEY::"
+        },
+        {
+          "name": "POSTGRES_HOST",
+          "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:cronso-dplay/rds:host::"
+        },
+        {
+          "name": "POSTGRES_DB",
+          "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:cronso-dplay/rds:dbname::"
+        },
+        {
+          "name": "POSTGRES_USER",
+          "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:cronso-dplay/rds:username::"
+        },
+        {
+          "name": "POSTGRES_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:cronso-dplay/rds:password::"
+        },
+        {
+          "name": "YOUTUBE_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:cronso-dplay/django:YOUTUBE_API_KEY::"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/cronso-dplay",
+          "awslogs-region": "<REGION>",
+          "awslogs-stream-prefix": "web"
+        }
+      }
+    }
+  ]
+}

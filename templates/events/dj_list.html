@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Mis eventos · {{ APP_NAME }}{% endblock %}
+{% block body_class %}dj{% endblock %}
+{% block nav %}{% include "dj/_header_nav.html" %}{% endblock %}
+{% block content %}
+{% include "dj/_tabs.html" %}
+
+<div class="dj-grid">
+  <section class="card">
+    <h1 class="card-title">Crear evento</h1>
+    <p class="hint card-intro">Al crear el evento se genera su link y su QR. Cada evento tiene su propio cupo de canciones por persona.</p>
+    <form method="post" class="form" id="event-form">
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="alert alert-error">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+      {% include "events/_event_form_fields.html" %}
+      <button type="submit" class="btn btn-primary btn-block">🎉 Crear evento y generar QR</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2 class="card-title">Mis eventos</h2>
+      {% if my_rating.n %}<span class="rating-badge" title="Calificación del público como DJ">🎧 Tu calificación ★ {{ my_rating.avg|floatformat:1 }} <small>({{ my_rating.n }})</small></span>{% endif %}
+    </div>
+    <p class="hint card-intro">Aquí ves los eventos que tú creaste: comparte su link o QR y ciérralos al terminar la noche.</p>
+    {% if events %}
+      <table class="dj-table">
+        <thead>
+          <tr><th>Evento</th><th>Discoteca</th><th class="num">Pedidos</th><th class="num">Personas</th><th>⭐</th><th>Estado</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for e in events %}
+            <tr>
+              <td>
+                <strong>{{ e.name }}</strong>
+                <small class="muted d-block">{{ e.created_at|date:"d M Y, h:i A" }} · código <code>{{ e.code }}</code></small>
+                <small class="muted d-block">🎧 {% if e.genre_labels %}{{ e.genre_labels|join:" · " }}{% else %}Todos los géneros{% endif %}</small>
+              </td>
+              <td>{{ e.venue.name }}</td>
+              <td class="num">{{ e.total }}</td>
+              <td class="num">{{ e.people }}</td>
+              <td>{% if e.rating_n %}<span class="rating-badge">★ {{ e.rating|floatformat:1 }} <small>({{ e.rating_n }})</small></span>{% else %}<span class="muted">—</span>{% endif %}</td>
+              <td>{% if e.is_open %}<span class="status status-played">Abierto</span>{% else %}<span class="status status-rejected">Cerrado</span>{% endif %}</td>
+              <td class="actions"><a class="btn btn-primary btn-sm" href="{% url 'events:dj_playlist' e.code %}">🎵 Playlist</a> <a class="btn btn-ghost btn-sm" href="{% url 'events:dj_detail' e.code %}">Link y QR</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="muted">Todavía no has creado eventos. Crea el de esta noche para compartir su QR.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}{% include "events/_event_form_script.html" %}{% endblock %}

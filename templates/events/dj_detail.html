@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}{{ event.name }} · {{ APP_NAME }}{% endblock %}
+{% block body_class %}dj{% endblock %}
+{% block nav %}{% include "dj/_header_nav.html" %}{% endblock %}
+{% block content %}
+{% include "dj/_tabs.html" %}
+
+<p><a href="{% if is_platform_admin %}{% url 'control:events' %}{% else %}{% url 'events:dj_list' %}{% endif %}">← {% if is_platform_admin %}Administrar eventos{% else %}Mis eventos{% endif %}</a></p>
+
+<div class="dj-grid event-share" id="event-share" data-url="{{ event.public_url }}" data-title="{{ event.name }} · {{ event.venue.name }}">
+  <section class="card center">
+    <p class="eyebrow">{{ event.venue.name }}</p>
+    <h1>{{ event.name }}</h1>
+    <p class="muted">
+      {% if event.is_open %}<span class="status status-played">Abierto</span>{% else %}<span class="status status-rejected">Cerrado</span>{% endif %}
+      · {{ event.max_per_person }} canciones por persona · código <code>{{ event.code }}</code>
+    </p>
+    <div class="genre-tags">
+      {% for g in event.genre_labels %}<span class="chip">{{ g }}</span>{% empty %}<span class="chip">🎧 Todos los géneros</span>{% endfor %}
+    </div>
+    <img class="qr-img" src="{% url 'events:qr' event.code %}" alt="QR del evento {{ event.name }}" width="300" height="300">
+    <div class="hero-actions">
+      <a class="btn btn-ghost btn-sm" href="{% url 'events:qr' event.code %}?formato=png&descargar=1">⬇ PNG</a>
+      <a class="btn btn-ghost btn-sm" href="{% url 'events:qr' event.code %}?descargar=1">⬇ SVG</a>
+      <a class="btn btn-ghost btn-sm" href="{% url 'events:dj_print' event.code %}" target="_blank">🖨️ Imprimir</a>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 class="card-title">Compartir</h2>
+    <label class="field">
+      <span>Link del evento</span>
+      <div class="copy-row">
+        <input type="text" readonly value="{{ event.public_url }}" id="event-url">
+        <button type="button" class="btn btn-primary" data-share="copy">📋 Copiar</button>
+      </div>
+    </label>
+    <div class="share-buttons">
+      <a class="btn btn-whatsapp" target="_blank" rel="noopener"
+         href="https://wa.me/?text={{ event.name|urlencode }}%20%C2%B7%20{{ event.venue.name|urlencode }}%20%E2%80%94%20%C2%A1Pide%20tu%20canci%C3%B3n%20al%20DJ!%20{{ event.public_url|urlencode }}">WhatsApp</a>
+      <button type="button" class="btn btn-ghost" data-share="native" hidden>📤 Compartir…</button>
+      <a class="btn btn-ghost" href="{{ event.get_absolute_url }}" target="_blank">👀 Ver como público</a>
+    </div>
+
+    <h3 class="pq-subtitle">Resumen</h3>
+    <div class="stat-row">
+      <div class="stat"><strong>{{ stats.total }}</strong><span>pedidos</span></div>
+      <div class="stat"><strong>{{ stats.people }}</strong><span>personas</span></div>
+    </div>
+
+    <div class="hero-actions left">
+      <a class="btn btn-primary" href="{% url 'events:dj_playlist' event.code %}">🎵 Playlist del evento</a>
+      <a class="btn btn-ghost" href="{% url 'dj:limits' %}?evento={{ event.code }}">♻️ Límites del evento</a>
+      <form method="post" action="{% url 'events:dj_toggle' event.code %}">
+        {% csrf_token %}
+        {% if event.is_open %}
+          <button class="btn btn-danger" type="submit" onclick="return confirm('¿Cerrar el evento? El link dejará de recibir pedidos.')">Cerrar evento</button>
+        {% else %}
+          <button class="btn btn-primary" type="submit">Reabrir evento</button>
+        {% endif %}
+      </form>
+    </div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  (() => {
+    const box = document.getElementById("event-share");
+    const url = box.dataset.url;
+    const copyBtn = box.querySelector('[data-share="copy"]');
+    copyBtn.addEventListener("click", async () => {
+      const input = document.getElementById("event-url");
+      try { await navigator.clipboard.writeText(url); }
+      catch (_) { input.select(); document.execCommand("copy"); }
+      copyBtn.textContent = "✓ Copiado";
+      setTimeout(() => (copyBtn.textContent = "📋 Copiar"), 1500);
+    });
+    const nativeBtn = box.querySelector('[data-share="native"]');
+    if (navigator.share) {
+      nativeBtn.hidden = false;
+      nativeBtn.addEventListener("click", () =>
+        navigator.share({ title: box.dataset.title, text: "¡Pide tu canción al DJ!", url }).catch(() => {}));
+    }
+  })();
+</script>
+{% endblock %}

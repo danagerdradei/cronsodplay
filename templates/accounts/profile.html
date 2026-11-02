@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Mi perfil · {{ APP_NAME }}{% endblock %}
+{% block content %}
+<section class="card profile-head">
+  {% if guest.picture_url %}
+    <img class="avatar avatar-lg" src="{{ guest.picture_url }}" alt="" width="72" height="72" referrerpolicy="no-referrer">
+  {% else %}
+    <span class="avatar avatar-lg avatar-empty" aria-hidden="true">{{ guest.first_name|first|upper }}</span>
+  {% endif %}
+  <div>
+    <h1>{{ guest.display_name }}</h1>
+    <p class="muted">{{ guest.full_name }} · {{ guest.email }}</p>
+    <p class="muted small-stats">🎵 {{ total }} {{ total|pluralize:"canción,canciones" }} pedida{{ total|pluralize }} · 🎉 {{ played }} sonaron</p>
+  </div>
+</section>
+
+<div class="dj-grid">
+  <section class="card">
+    <h2 class="card-title">Mis datos</h2>
+    <form method="post" class="form" novalidate>
+      {% csrf_token %}
+      <div class="form-stack">
+        {% include "partials/field.html" with field=form.alias %}
+        {% if guest.alias %}<p class="hint">Tu alias quedó registrado y ya no se puede cambiar.</p>{% endif %}
+        {% include "partials/field.html" with field=form.phone %}
+      </div>
+      <button class="btn btn-primary btn-block" type="submit">Guardar</button>
+    </form>
+    <form method="post" action="{% url 'accounts:logout' %}" class="logout-form">
+      {% csrf_token %}<button class="link-btn" type="submit">Cerrar sesión</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2 class="card-title">Eventos abiertos</h2>
+    {% if open_events %}
+      <ul class="song-list">
+        {% for item in open_events %}
+          <li class="song-card">
+            <div class="song-main">
+              <strong>🎉 {{ item.event.name }}</strong>
+              <span class="muted">{{ item.event.venue.name }}</span>
+            </div>
+            <span class="badge">{{ item.remaining }} de {{ item.max }} disponibles</span>
+            {% if item.remaining %}<a class="btn btn-primary btn-sm" href="{{ item.event.get_absolute_url }}">Pedir</a>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">No hay eventos abiertos en este momento.</p>
+    {% endif %}
+
+    <h2 class="card-title history-title">Mi historial</h2>
+    {% if history %}
+      <ul class="song-list">
+        {% for song in history %}
+          <li class="song-card">
+            {% include "partials/song_thumb.html" %}
+            <div class="song-main">
+              <strong>{{ song.title }}</strong>
+              <span>{{ song.artist }} · {{ song.get_genre_display }}</span>
+              <small class="muted">{% if song.event %}🎉 {{ song.event.name }} · {% endif %}{{ song.venue.name }} · {{ song.created_at|date:"d M, h:i A" }}</small>
+            </div>
+            <span class="status status-{{ song.status }}">{{ song.get_status_display }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">Aún no has pedido canciones. ¡Anímate! 🎶</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% load static %}<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <title>{% block title %}{{ APP_NAME }}{% endblock %}</title>
+  <link rel="icon" href="{% static 'img/favicon.png' %}" type="image/png">
+  <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <div class="bg-glow" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="brand" href="{% url 'core:home' %}">
+      <img src="{% static 'img/logo-owl.webp' %}" alt="" width="98" height="96">
+      <span>Cronso <strong>Dplay</strong></span>
+    </a>
+    <nav class="topnav">
+      {% block nav %}
+        <a href="{% url 'songs:request' %}">Pedir</a>
+        <a href="{% url 'songs:my_requests' %}">Mis canciones</a>
+        {% if current_guest %}
+          <a class="nav-profile" href="{% url 'accounts:profile' %}" title="Mi perfil">
+            {% if current_guest.picture_url %}<img class="avatar" src="{{ current_guest.picture_url }}" alt="" width="30" height="30" referrerpolicy="no-referrer">{% else %}<span class="avatar avatar-empty">{{ current_guest.first_name|first|upper }}</span>{% endif %}
+            <span class="nav-name">{{ current_guest.public_name }}</span>
+          </a>
+        {% elif GOOGLE_LOGIN_REQUIRED %}
+          <a class="btn btn-primary btn-sm" href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">Entrar</a>
+        {% endif %}
+      {% endblock %}
+    </nav>
+  </header>
+
+  <main class="container">
+    {% if messages %}
+      <div class="messages">
+        {% for message in messages %}<div class="alert alert-{{ message.tags }}">{{ message }}</div>{% endfor %}
+      </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <small>{{ APP_NAME }} · Hecho para la pista 🎧</small>
+  </footer>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

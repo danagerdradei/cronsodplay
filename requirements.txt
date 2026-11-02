@@ -1,0 +1,7 @@
+Django>=5.2,<5.3
+psycopg[binary]>=3.2,<3.3
+gunicorn>=23.0,<24.0
+whitenoise>=6.8,<7.0
+segno>=1.6,<2.0
+google-auth>=2.35,<3.0
+requests>=2.32,<3.0

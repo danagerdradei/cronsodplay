@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Ya pediste tus canciones · {{ APP_NAME }}{% endblock %}
+{% block body_class %}wide{% endblock %}
+{% block content %}
+<div class="request-layout">
+<section class="card center limit-card">
+  <div class="big-emoji" aria-hidden="true">🙌</div>
+  <h1>¡Gracias por tu buena energía!</h1>
+  {% if reason == "email" %}
+    <p class="lead">
+      Con el correo <strong>{{ email }}</strong> ya pediste tus <strong>{{ max_songs }} canciones</strong>,
+      el máximo permitido para que todos tengan la oportunidad de sonar.
+    </p>
+  {% else %}
+    {# Límite por dispositivo o IP: no se revela el motivo ni la IP. #}
+    <p class="lead">
+      Ya alcanzaste el máximo de canciones que se pueden pedir por ahora,
+      para que todos tengan la oportunidad de sonar.
+    </p>
+  {% endif %}
+  <p class="muted">El DJ ya tiene tus pedidos en su lista. Mientras tanto… ¡a la pista! 🪩</p>
+  <div class="hero-actions">
+    <a class="btn btn-primary" href="{% url 'songs:my_requests' %}">Ver mis canciones</a>
+    {% if can_switch_email %}
+      <form method="post" action="{% url 'songs:forget_me' %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{% if event %}{{ event.get_absolute_url }}{% else %}{% url 'songs:request' %}{% endif %}">
+        <button class="btn btn-ghost" type="submit">Usar otro correo</button>
+      </form>
+    {% endif %}
+  </div>
+  <p class="hint">👉 Mientras tanto, mira cómo va la playlist y puntúa las canciones que pidió la gente.</p>
+</section>
+
+{% include "partials/public_queue.html" %}
+</div>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/platform.js' %}" defer></script><script src="{% static 'js/public-queue.js' %}" defer></script>{% endblock %}

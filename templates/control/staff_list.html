@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Usuarios DJ y Admin · {{ APP_NAME }}{% endblock %}
+{% block body_class %}dj control{% endblock %}
+{% block nav %}{% include "dj/_header_nav.html" %}{% endblock %}
+{% block content %}
+{% include "control/_tabs.html" with control_title="Usuarios DJ y Admin" %}
+
+<div class="dj-grid">
+  <section class="card">
+    <h2 class="card-title">➕ Crear usuario</h2>
+    <p class="hint card-intro"><strong>DJ:</strong> cola, eventos y límites. <strong>Admin:</strong> además este panel de control y la administración avanzada.</p>
+    <form method="post" class="form" novalidate>
+      {% csrf_token %}
+      <div class="form-stack">
+        {% include "partials/field.html" with field=form.username %}
+        {% include "partials/field.html" with field=form.first_name %}
+        {% include "partials/field.html" with field=form.role %}
+        {% include "partials/field.html" with field=form.password1 %}
+        {% include "partials/field.html" with field=form.password2 %}
+      </div>
+      <button class="btn btn-primary btn-block" type="submit">Crear usuario</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2 class="card-title">Equipo ({{ rows|length }})</h2>
+    <table class="dj-table">
+      <thead><tr><th>Usuario</th><th>Rol</th><th>Estado</th><th class="num">Atendió</th><th>Último acceso</th><th></th></tr></thead>
+      <tbody>
+        {% for r in rows %}
+          <tr>
+            <td><strong>{{ r.user.get_short_name|default:r.user.username }}</strong><small class="muted d-block">@{{ r.user.username }}{% if r.user == user %} · tú{% endif %}</small></td>
+            <td>{% if r.role == "admin" %}<span class="chip chip-moment">🛡️ Admin</span>{% else %}<span class="chip">🎧 DJ</span>{% endif %}</td>
+            <td>{% if r.user.is_active %}<span class="status status-played">Activo</span>{% else %}<span class="status status-rejected">Inactivo</span>{% endif %}</td>
+            <td class="num">{{ r.user.handled }}</td>
+            <td>{{ r.user.last_login|date:"d M, h:i A"|default:"Nunca" }}</td>
+            <td class="actions"><a class="btn btn-ghost btn-sm" href="{% url 'control:staff_edit' r.user.pk %}">Editar</a></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</div>
+{% endblock %}

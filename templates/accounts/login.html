@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Entrar · {{ APP_NAME }}{% endblock %}
+{% block content %}
+<section class="card center narrow login-card">
+  <img class="login-logo" src="{% static 'img/logo-cronso.webp' %}" alt="Cronso" width="501" height="640">
+  <h1>Pídele tu canción al DJ</h1>
+  <p class="lead">Entra con tu cuenta de Google para pedir canciones y puntuar la playlist.</p>
+
+  {% if GOOGLE_CLIENT_ID %}
+    {% csrf_token %}
+    <div id="g_id_onload"
+         data-client_id="{{ GOOGLE_CLIENT_ID }}"
+         data-callback="onGoogleCredential"
+         data-auto_prompt="false"
+         data-ux_mode="popup"
+         data-context="signin"></div>
+    <div class="google-btn">
+      <div class="g_id_signin" data-type="standard" data-theme="filled_black" data-shape="pill"
+           data-size="large" data-text="continue_with" data-logo_alignment="left" data-locale="es"></div>
+    </div>
+    <p id="login-error" class="alert alert-error" hidden></p>
+    <p class="legal">Solo usamos tu nombre, tu correo y tu foto de Google para crear tu perfil. Nunca vemos tu contraseña.</p>
+  {% else %}
+    <div class="alert alert-error">
+      El inicio de sesión con Google aún no está configurado. El administrador debe definir <code>GOOGLE_CLIENT_ID</code>.
+    </div>
+  {% endif %}
+
+  <p class="muted"><a href="{% url 'core:home' %}">← Volver al inicio</a></p>
+</section>
+{% endblock %}
+{% block scripts %}
+{% if GOOGLE_CLIENT_ID %}
+{{ next|json_script:"login-next" }}
+<script>
+  function onGoogleCredential(response) {
+    const error = document.getElementById("login-error");
+    error.hidden = true;
+    fetch("{% url 'accounts:google_callback' %}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
+      },
+      body: JSON.stringify({ credential: response.credential, next: JSON.parse(document.getElementById("login-next").textContent) }),
+    })
+      .then((r) => r.json().then((data) => ({ ok: r.ok, data })))
+      .then(({ ok, data }) => {
+        if (ok) { location.href = data.redirect; return; }
+        error.textContent = data.error || "No pudimos iniciar sesión. Intenta de nuevo.";
+        error.hidden = false;
+      })
+      .catch(() => { error.textContent = "Sin conexión. Intenta de nuevo."; error.hidden = false; });
+  }
+</script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+{% endif %}
+{% endblock %}

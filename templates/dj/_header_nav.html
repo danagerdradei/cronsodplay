@@ -1,0 +1,5 @@
+<span class="who">🎧 {{ user.get_short_name|default:user.username }}</span>
+{% if is_platform_admin %}<a href="{% url 'control:dashboard' %}">🛡️ Control</a>{% endif %}
+<form method="post" action="{% url 'dj:logout' %}" class="inline">
+  {% csrf_token %}<button class="link-btn" type="submit">Salir</button>
+</form>

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Personas · {{ APP_NAME }}{% endblock %}
+{% block body_class %}dj control{% endblock %}
+{% block nav %}{% include "dj/_header_nav.html" %}{% endblock %}
+{% block content %}
+{% include "control/_tabs.html" with control_title="Personas que piden canciones" %}
+
+<form method="get" class="card form limits-search">
+  <div class="field grow">
+    <label for="people-q">Buscar por correo, nombre, alias o celular</label>
+    <input id="people-q" type="search" name="q" value="{{ query }}" placeholder="Ej: correo@ejemplo.com, María, 300…" autocomplete="off">
+  </div>
+  <div class="field">
+    <label for="people-order">Ordenar por</label>
+    <select id="people-order" name="orden" onchange="this.form.submit()">
+      <option value="" {% if not orden %}selected{% endif %}>Último pedido</option>
+      <option value="recientes" {% if orden == "recientes" %}selected{% endif %}>Registro más reciente</option>
+      <option value="pedidos" {% if orden == "pedidos" %}selected{% endif %}>Más pedidos</option>
+      <option value="nombre" {% if orden == "nombre" %}selected{% endif %}>Nombre</option>
+    </select>
+  </div>
+  <button class="btn btn-primary" type="submit">Buscar</button>
+  <a class="btn btn-ghost" href="{% url 'control:people_export' %}?q={{ query|urlencode }}&orden={{ orden }}">⬇ CSV</a>
+</form>
+
+<section class="card">
+  <div class="card-head">
+    <h2 class="card-title">{% if query %}Resultados para «{{ query }}»{% else %}Todas las personas{% endif %}</h2>
+    <span class="pq-badge">{{ total }} persona{{ total|pluralize:"s" }}</span>
+  </div>
+  {% if page.object_list %}
+    <table class="dj-table">
+      <thead><tr><th>Persona</th><th>Correo</th><th>Celular</th><th class="num">Pedidos</th><th class="num">Sonaron</th><th>Último pedido</th><th></th></tr></thead>
+      <tbody>
+        {% for g in page.object_list %}
+          <tr>
+            <td>
+              <div class="person-cell">
+                {% if g.picture_url %}<img class="avatar" src="{{ g.picture_url }}" alt="" width="30" height="30" referrerpolicy="no-referrer">{% else %}<span class="avatar avatar-empty">{{ g.first_name|first|upper }}</span>{% endif %}
+                <div><strong>{{ g.display_name }}</strong>{% if g.alias %}<small class="muted d-block">{{ g.full_name }}</small>{% endif %}</div>
+              </div>
+            </td>
+            <td>{{ g.email }}{% if g.google_sub %} <span class="chip" title="Inició sesión con Google">G</span>{% endif %}</td>
+            <td>{{ g.phone|default:"—" }}</td>
+            <td class="num">{{ g.n }}</td>
+            <td class="num">{{ g.played }}</td>
+            <td>{{ g.last|date:"d M, h:i A"|default:"—" }}</td>
+            <td class="actions"><a class="btn btn-ghost btn-sm" href="{% url 'control:person' g.pk %}">Ver</a></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if page.has_other_pages %}
+      <nav class="pager">
+        {% if page.has_previous %}<a class="btn btn-ghost btn-sm" href="?q={{ query|urlencode }}&orden={{ orden }}&pagina={{ page.previous_page_number }}">← Anterior</a>{% endif %}
+        <span class="muted">Página {{ page.number }} de {{ page.paginator.num_pages }}</span>
+        {% if page.has_next %}<a class="btn btn-ghost btn-sm" href="?q={{ query|urlencode }}&orden={{ orden }}&pagina={{ page.next_page_number }}">Siguiente →</a>{% endif %}
+      </nav>
+    {% endif %}
+  {% else %}
+    <p class="muted">{% if query %}No se encontró a nadie con «{{ query }}».{% else %}Todavía nadie ha pedido canciones.{% endif %}</p>
+  {% endif %}
+</section>
+{% endblock %}

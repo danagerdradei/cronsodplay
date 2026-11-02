@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Sin permiso · {{ APP_NAME }}{% endblock %}
+{% block nav %}{% include "dj/_header_nav.html" %}{% endblock %}
+{% block content %}
+<section class="card center narrow">
+  <div class="big-emoji" aria-hidden="true">🛡️</div>
+  <h1>Solo para el Admin</h1>
+  <p class="lead">El panel de control es exclusivo del administrador de la plataforma.</p>
+  <a class="btn btn-primary" href="{% url 'dj:panel' %}">Ir a mi panel de DJ</a>
+</section>
+{% endblock %}

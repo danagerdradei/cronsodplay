@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Pide tu canción · {{ APP_NAME }}{% endblock %}
+{% block body_class %}wide{% endblock %}
+{% block content %}
+<div class="request-layout">
+<div class="request-main">
+<section class="page-head">
+  {% if event %}<p class="eyebrow">🎉 {{ event.name }} · {{ venue.name }}</p>{% elif venue %}<p class="eyebrow">📍 {{ venue.name }}</p>{% endif %}
+  <h1>Pide tu canción</h1>
+  <div class="quota" aria-live="polite">
+    {% for i in quota_slots %}
+      <span class="quota-dot{% if i > remaining %} used{% endif %}"></span>
+    {% endfor %}
+    <span>Te quedan <strong>{{ remaining }}</strong> de {{ max_songs }}</span>
+  </div>
+  <a class="jump-queue" href="#public-queue">👀 Ver la cola y puntuar canciones</a>
+</section>
+
+{% if event and event.genre_labels %}
+  <div class="alert genre-banner">
+    🎧 <strong>Esta noche el DJ toca:</strong>
+    {% for g in event.genre_labels %}<span class="chip">{{ g }}</span>{% endfor %}
+    <small class="d-block muted">Pide canciones de estos géneros para que suenen.</small>
+  </div>
+{% endif %}
+<form method="post" class="card form" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-error">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+
+  <fieldset>
+    <legend><span class="step">1</span> La canción</legend>
+    <div class="grid-2">
+      {% include "partials/field.html" with field=form.title %}
+      {% include "partials/field.html" with field=form.artist %}
+      {% include "partials/field.html" with field=form.genre %}
+      {% include "partials/field.html" with field=form.reference_url %}
+    </div>
+    <p class="hint">Pega el link de YouTube o Spotify para que el DJ la encuentre más rápido.</p>
+  </fieldset>
+
+  <fieldset>
+    <legend><span class="step">2</span> Tus datos</legend>
+    {% if form.guest %}
+      <div class="identity-card">
+        {% if form.guest.picture_url %}<img class="avatar" src="{{ form.guest.picture_url }}" alt="" width="40" height="40" referrerpolicy="no-referrer">{% else %}<span class="avatar avatar-empty">{{ form.guest.first_name|first|upper }}</span>{% endif %}
+        <div>
+          <strong>{{ form.guest.full_name }}</strong>
+          <small class="muted d-block">{{ form.guest.email }} · cuenta de Google</small>
+        </div>
+        <button type="submit" form="forget-me-form" class="link-btn">¿No eres tú? Cerrar sesión</button>
+      </div>
+    {% elif known_guest %}
+      <p class="hint known-guest">
+        ¡Hola de nuevo, {{ known_guest.display_name }}! Tus datos quedan como los registraste la primera vez.
+        <button type="submit" form="forget-me-form" class="link-btn">¿No eres tú? Usar otro correo</button>
+      </p>
+    {% endif %}
+    <div class="grid-2">
+      {% if not form.guest %}
+        {% include "partials/field.html" with field=form.first_name %}
+        {% include "partials/field.html" with field=form.last_name %}
+      {% endif %}
+      {% include "partials/field.html" with field=form.alias %}
+      {% include "partials/field.html" with field=form.phone %}
+      {% if not form.guest %}{% include "partials/field.html" with field=form.email %}{% endif %}
+      {% if venue %}
+        <input type="hidden" name="venue" value="{{ venue.pk }}">
+        {% if form.venue.errors %}{% include "partials/field.html" with field=form.venue %}{% endif %}
+      {% else %}
+        {% include "partials/field.html" with field=form.venue %}
+      {% endif %}
+    </div>
+  </fieldset>
+
+  {% if experience %}
+    <fieldset class="experience">
+      <legend><span class="step">⭐</span> Califica tu noche <span class="req" aria-hidden="true">*</span></legend>
+      <p class="hint">Es tu <strong>última canción</strong> de {% if experience.event %}este evento{% else %}esta noche{% endif %}. Cuéntanos cómo la estás pasando: es obligatorio para enviarla.</p>
+      <div class="star-fields">
+        {% include "partials/star_input.html" with field=form.venue_stars icon="🏢" title=experience.venue.name subtitle="El local" %}
+        {% if experience.event %}{% include "partials/star_input.html" with field=form.event_stars icon="🎉" title=experience.event.name subtitle="El evento" %}{% endif %}
+        {% if experience.dj %}{% include "partials/star_input.html" with field=form.dj_stars icon="🎧" title=experience.dj_name subtitle="El DJ" %}{% endif %}
+      </div>
+    </fieldset>
+  {% endif %}
+
+  <button type="submit" class="btn btn-primary btn-lg btn-block" data-loading-text="Enviando…">{% if experience %}Calificar y enviar al DJ{% else %}Enviar al DJ{% endif %}</button>
+  <p class="legal">Tu correo queda asociado a tus nombres y alias: úsalos igual cada vez que pidas. Lo usamos solo para contar tus pedidos y mostrarte tus canciones.</p>
+</form>
+{% if known_guest or form.guest %}
+  <form id="forget-me-form" method="post" action="{% url 'songs:forget_me' %}" hidden>
+    {% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
+  </form>
+{% endif %}
+</div>
+
+{% include "partials/public_queue.html" %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  // Evita doble envío en conexiones lentas.
+  document.querySelector("form.form").addEventListener("submit", (e) => {
+    const btn = e.target.querySelector("button[type=submit]");
+    btn.disabled = true; btn.textContent = btn.dataset.loadingText;
+  });
+</script>
+<script src="{% static 'js/platform.js' %}" defer></script><script src="{% static 'js/public-queue.js' %}" defer></script>
+{% endblock %}

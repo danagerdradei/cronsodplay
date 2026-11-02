@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<section class="hero">
+  <img class="hero-logo" src="{% static 'img/logo-cronso.webp' %}" alt="Cronso" width="501" height="640" fetchpriority="high">
+  <p class="eyebrow">Tu música, tu noche</p>
+  <h1>Pídele tu canción<br><span class="gradient-text">al DJ</span></h1>
+  <p class="lead">Escanea, elige y listo. Puedes pedir hasta <strong>{{ SONG_MAX_PER_EMAIL }} canciones</strong> con tu correo.</p>
+  <div class="hero-actions">
+    <a class="btn btn-primary btn-lg" href="{% url 'songs:request' %}">Pedir una canción</a>
+    <a class="btn btn-ghost btn-lg" href="{% url 'songs:my_requests' %}">Ver mis canciones</a>
+  </div>
+</section>
+
+{% if venues %}
+<section class="card">
+  <h2 class="card-title">¿Dónde estás esta noche?</h2>
+  <div class="venue-grid">
+    {% for venue in venues %}
+      <a class="venue-chip" href="{% url 'songs:request_for_venue' venue.slug %}">
+        <span class="venue-name">{{ venue.name }}</span>
+        {% if venue.city %}<span class="venue-city">{{ venue.city }}</span>{% endif %}
+      </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}
