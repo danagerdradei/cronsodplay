@@ -29,9 +29,9 @@
 <section class="card">
   <div class="card-head">
     <h2 class="card-title">
-      {% if query %}Resultados para «{{ query }}»{% else %}Personas que llegaron al límite{% endif %}
+      {% if query %}Resultados para «{{ query }}»{% else %}Personas que han pedido canciones{% endif %}
     </h2>
-    <span class="pq-badge">Límite: {{ per_person }} por persona</span>
+    <span class="pq-badge">Límite: {{ per_person }} por persona{% if rows %} · {{ at_limit }} en el límite{% endif %}</span>
   </div>
 
   {% if rows %}
@@ -68,7 +68,7 @@
     </table>
     <p class="hint">Al restablecer, las canciones de la persona <strong>siguen en la cola</strong>; solo dejan de contar para su límite (también se libera el dispositivo que usó).</p>
   {% else %}
-    <p class="muted">{% if query %}No se encontró a nadie con «{{ query }}».{% else %}Nadie ha llegado al límite en este evento todavía.{% endif %}</p>
+    <p class="muted">{% if query %}No se encontró a nadie con «{{ query }}».{% else %}Nadie ha pedido canciones en este evento todavía.{% endif %}</p>
   {% endif %}
 </section>
 

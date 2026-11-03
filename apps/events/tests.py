@@ -133,6 +133,17 @@ class LimitResetTests(TestCase):
         self.assertNotContains(response, "elputres@hotmail.com")
         self.assertNotContains(response, "3001234567")
 
+    def test_lists_everyone_who_requested_with_people_at_limit_first(self):
+        Guest.objects.create(email="sinpedir@gmail.com", first_name="Sin", last_name="Pedir", alias="Nadita", phone="1")
+        self.client_class().post(self.event.get_absolute_url(),
+                                 {**guest_data("may@gmail.com", alias="Mayita"), "venue": self.venue.pk,
+                                  "title": "Solo una", "artist": "X", "genre": "pop"})
+        page = self.client.get(reverse("dj:limits") + f"?evento={self.event.code}").content.decode()
+        self.assertIn("Mayita", page)            # 1 de 2: también aparece
+        self.assertNotIn("Nadita", page)         # se registró pero no ha pedido
+        self.assertLess(page.index("Elputrefacto"), page.index("Mayita"))  # el del límite va primero
+        self.assertIn("1 en el límite", page)
+
     def test_search_by_email_name_or_alias(self):
         for q in ("elputres@hotmail", "Ana", "putrefacto"):
             response = self.client.get(reverse("dj:limits") + f"?evento={self.event.code}&q={q}")

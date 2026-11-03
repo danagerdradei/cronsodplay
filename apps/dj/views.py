@@ -171,8 +171,8 @@ def limits(request):
             | Q(last_name__icontains=query) | Q(alias__icontains=query)
         )
     else:
-        guests = guests.filter(used__gte=per_person)  # sin búsqueda: quienes ya llegaron al límite
-    guests = guests.order_by("-last")[:50]
+        guests = guests.filter(used__gte=1)  # sin búsqueda: todos los que han pedido en el evento
+    guests = guests.order_by("-used", "-last")[:50]  # primero los que llegaron al límite
 
     rows = [
         {
@@ -184,10 +184,11 @@ def limits(request):
         }
         for g in guests
     ]
+    at_limit = sum(r["at_limit"] for r in rows)
     resets = LimitReset.objects.select_related("guest", "reset_by", "event")[:10]
     return render(request, "dj/limits.html", {
         "rows": rows, "query": query, "event": event, "open_events": open_events,
-        "per_person": per_person, "resets": resets, "dj_tab": "limits",
+        "per_person": per_person, "at_limit": at_limit, "resets": resets, "dj_tab": "limits",
     })
 
 

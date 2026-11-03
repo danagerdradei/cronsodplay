@@ -23,7 +23,7 @@ Base local: `http://localhost:8000` · Producción: `https://dplay.cronso.com` (
 | GET | `/dj/eventos/<código>/playlist/` | DJ (dueño) / Admin | HTML | **Playlist del evento**: cola en vivo solo de ese evento (pestañas, YouTube, estrellas, ✓ ✕). El Admin ve además Editar y Reiniciar |
 | POST | `/dj/eventos/<código>/estado/` | DJ / Admin | Redirect | Cerrar o reabrir el evento |
 | GET | `/dj/eventos/<código>/imprimir/` | DJ / Admin | HTML | QR imprimible del evento |
-| GET | `/dj/limites/?evento=<código>&q=<texto>` | DJ / Admin | HTML | Buscar personas (correo, nombre, alias); sin `q` lista a quienes llegaron al límite |
+| GET | `/dj/limites/?evento=<código>&q=<texto>` | DJ / Admin | HTML | Buscar personas (correo, nombre, alias); sin `q` lista a todos los que han pedido en el evento (primero los que están en el límite) |
 | POST | `/dj/limites/<guest_id>/restablecer/` | DJ / Admin | Redirect | Restablecer el cupo (campo `evento`; vacío = pedidos sin evento) |
 | GET | `/v/<slug>/qr.svg` | Público | SVG | Imagen del QR (cache 24 h) |
 | GET | `/v/<slug>/qr/` | Staff | HTML | QR imprimible |
