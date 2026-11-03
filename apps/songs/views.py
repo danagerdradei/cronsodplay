@@ -15,6 +15,7 @@ from .models import Guest, SongRequest
 from .services import (
     AliasTaken,
     DuplicateSong,
+    SongAlreadyInEvent,
     ExperienceRequired,
     GenreNotAllowed,
     LinkAlreadyUsed,
@@ -134,6 +135,14 @@ def _request_song(request, venue, device_id, event=None):
             except LimitReached as exc:
                 request.session[SESSION_EMAIL_KEY] = email
                 return _limit_page(request, email, exc.reason, device_id, venue, event)
+            except SongAlreadyInEvent as exc:
+                if exc.status == SongRequest.Status.PLAYED:
+                    msg = "Esa canción ya sonó esta noche. ¡Pide otra!"
+                elif exc.status == SongRequest.Status.REJECTED:
+                    msg = "Esa canción ya la pidieron y el DJ no la tiene disponible. ¡Pide otra!"
+                else:
+                    msg = "Esa canción ya está en la cola de esta noche: no hace falta pedirla de nuevo. "                           "Puedes puntuarla en la playlist y pedir otra."
+                form.add_error("title", msg)
             except DuplicateSong:
                 form.add_error("title", "Ya pediste esta canción con este correo. ¡Prueba con otra!")
             except IdentityMismatch as exc:

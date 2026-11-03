@@ -82,7 +82,7 @@
 2. Actualiza los datos de contacto con lo último que escribió la persona.
 3. Si `pedidos >= SONG_MAX_PER_EMAIL` (dentro de la ventana `SONG_LIMIT_WINDOW_HOURS` si está activa) → `LimitReached`.
 4. Límites anti-abuso: si el **dispositivo** ya usó `SONG_MAX_PER_DEVICE` → `LimitReached("device")`; si la **IP** llegó a `SONG_MAX_PER_IP` en las últimas `SONG_IP_WINDOW_HOURS` (y no está en `SONG_IP_ALLOWLIST`) → `LimitReached("ip")`.
-5. Si ya pidió la misma canción (texto normalizado sin tildes/signos) → `DuplicateSong`.
+5. **En un evento, cada canción se pide una sola vez** (la pida quien la pida) → `SongAlreadyInEvent`. Se compara la huella `song_signature()`: título + artista sin tildes, mayúsculas, signos ni artículos/conectores (el, la, los, las, the, ft, feat, y), en cualquier orden; o el mismo video de YouTube / track de Spotify. Cuenta aunque ya haya sonado o esté como no disponible; si el DJ la borra, se puede volver a pedir. El evento se bloquea (`select_for_update`) para que dos pedidos simultáneos no pasen. Sin evento, aplica la regla anterior por persona → `DuplicateSong`.
 6. Crea la `SongRequest` (con `client_ip` y `device_id`); `save()` calcula `platform` (YouTube/Spotify) y las claves normalizadas.
 7. Ya fuera de la transacción, `attach_thumbnail()` obtiene la portada del link y `enrich_in_background()` consulta YouTube en un hilo (vistas, likes, duración, recomendación por comentarios; ver [API.md §7](API.md#7-apis-externas)) (ver [API.md §7](API.md#7-apis-externas)). Si falla, no afecta el pedido.
 

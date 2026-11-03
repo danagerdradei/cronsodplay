@@ -13,6 +13,19 @@ def normalize_key(value):
     return re.sub(r"[^a-z0-9]+", " ", value).strip()
 
 
+# Palabras que no cambian la canción: artículos y conectores de colaboraciones.
+_SIGNATURE_STOPWORDS = {"el", "la", "los", "las", "the", "ft", "feat", "featuring", "y", "and"}
+
+
+def song_signature(title, artist):
+    """
+    Huella de una canción para detectar repetidas en un evento, tolerante a variaciones:
+    "La Kelly / El cartel de santa" = "la kelly / Cartel de Santa" = "Cartel de Santa / La Kelly".
+    """
+    words = normalize_key(f"{title} {artist}").split()
+    return " ".join(sorted(w for w in words if w not in _SIGNATURE_STOPWORDS))
+
+
 class Guest(models.Model):
     """Persona que escanea el QR. No tiene usuario ni contraseña: su identificador es el correo."""
 

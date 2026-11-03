@@ -34,7 +34,7 @@ Web app para que las personas de una discoteca o bar **le pidan canciones al DJ*
   - Tope **por IP pública** alto y configurable (15 cada 12 h por defecto). No es 3 porque el WiFi del bar y los operadores móviles comparten la misma IP entre muchas personas. Se pueden eximir IPs/redes (ej. el WiFi de la discoteca).
   - La IP y el dispositivo **solo los ve el Admin**. Al usuario se le muestra un mensaje amable que no revela el motivo.
 - **Calificación de la noche:** al pedir la **última canción de su cupo** (la 3ra con cupo 3), la persona debe calificar de 1 a 5 ★ el **local**, el **evento** y al **DJ**; sin eso no se envía. Se guarda por evento y local, una sola vez por evento.
-- Una persona **no puede repetir la misma canción**: se compara sin tildes, mayúsculas ni signos (`"La Canción"` = `"la cancion"`).
+- **En un evento no se repiten canciones**, sin importar quién la pida: se compara sin tildes, mayúsculas, signos ni artículos y en cualquier orden (`"La Kelly / El cartel de santa"` = `"Cartel de Santa / la kelly"`), y también por el mismo video de YouTube o track de Spotify.
 - El correo no distingue mayúsculas (`ANA@x.com` = `ana@x.com`).
 - **Identidad fija por correo:** los nombres, apellidos y alias con que se registró un correo la primera vez deben usarse igual en los siguientes pedidos (sin importar mayúsculas, tildes ni espacios). El celular sí se puede actualizar. Un alias en blanco significa "seguir con el registrado".
 - **Alias único:** un alias pertenece a un solo correo. Los nombres sí pueden repetirse entre personas distintas.

@@ -581,3 +581,45 @@ class RequestsRequireEventTests(TestCase):
     def test_venue_qr_leads_to_its_event(self):
         response = self.client.get(reverse("venues:entry", args=[self.casa.slug]), follow=True)
         self.assertEqual(response.redirect_chain[-1][0], self.hiphop.get_absolute_url())
+
+
+@override_settings(SONG_MAX_PER_EMAIL=3, SONG_MAX_PER_DEVICE=0, SONG_MAX_PER_IP=0, YOUTUBE_API_KEY="")
+class NoRepeatedSongsPerEventTests(TestCase):
+    """En un evento cada canción se pide una sola vez, la pida quien la pida."""
+
+    def setUp(self):
+        self.venue = Venue.objects.create(name="La Casa del Hip Hop")
+        self.event = Event.objects.create(name="Houseofhiphoplandia", venue=self.venue)
+        self.post("may@gmail.com", "La Kelly", "El cartel de santa", "https://youtu.be/AAAAAAAAAAA")
+
+    def post(self, email, title, artist, link="", event=None):
+        data = {**guest_data(email), "venue": self.venue.pk, "title": title, "artist": artist,
+                "genre": "hiphop", "reference_url": link}
+        return self.client_class().post((event or self.event).get_absolute_url(), data)
+
+    def test_variations_of_the_same_song_are_blocked_for_anyone(self):
+        for email, title, artist in [("may@gmail.com", "La kelly", "Cartel de santa"),
+                                     ("otro@gmail.com", "LA KELLY", "Cártel de Santa"),
+                                     ("otro2@gmail.com", "Cartel de Santa", "La Kelly")]:
+            response = self.post(email, title, artist)
+            self.assertContains(response, "ya está en la cola de esta noche", msg_prefix=f"{title}/{artist}")
+        self.assertEqual(SongRequest.objects.count(), 1)
+
+    def test_same_video_with_other_name_is_blocked(self):
+        self.assertContains(self.post("otro@gmail.com", "Shorty Party", "Kelly", "https://www.youtube.com/watch?v=AAAAAAAAAAA"),
+                            "ya está en la cola de esta noche")
+        self.assertEqual(SongRequest.objects.count(), 1)
+
+    def test_played_song_cannot_be_requested_again(self):
+        SongRequest.objects.update(status=SongRequest.Status.PLAYED)
+        self.assertContains(self.post("otro@gmail.com", "La Kelly", "Cartel de Santa"), "ya sonó esta noche")
+
+    def test_other_songs_and_other_events_are_allowed(self):
+        self.assertEqual(self.post("otro@gmail.com", "Shorty Party", "Cartel de Santa").status_code, 302)
+        other = Event.objects.create(name="Otra noche", venue=self.venue)
+        self.assertEqual(self.post("otro2@gmail.com", "La Kelly", "Cartel de Santa", event=other).status_code, 302)
+        self.assertEqual(SongRequest.objects.count(), 3)
+
+    def test_deleted_song_can_be_requested_again(self):
+        SongRequest.objects.all().delete()
+        self.assertEqual(self.post("otro@gmail.com", "La Kelly", "Cartel de Santa").status_code, 302)

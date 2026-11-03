@@ -18,7 +18,7 @@ from apps.core.net import ip_in_list
 
 from . import youtube
 from .analysis import analyze
-from .models import ExperienceRating, Guest, LimitReset, SongRequest, normalize_key
+from .models import ExperienceRating, Guest, LimitReset, SongRequest, normalize_key, song_signature
 from .thumbnails import fetch_thumbnail, link_identity, youtube_video_id
 
 logger = logging.getLogger(__name__)
@@ -38,6 +38,14 @@ class LimitReached(SongRequestError):
 
 class DuplicateSong(SongRequestError):
     pass
+
+
+class SongAlreadyInEvent(SongRequestError):
+    """Esa canción (o ese mismo video/track) ya la pidió alguien en este evento. `status` = estado de esa petición."""
+
+    def __init__(self, status):
+        super().__init__(status)
+        self.status = status
 
 
 class IdentityMismatch(SongRequestError):
@@ -237,12 +245,24 @@ def reset_limit(guest, user, event=None):
     return released
 
 
+def _same_song_in_event(event, title, artist, identity):
+    """Estado de la petición del evento que es la misma canción (por nombre o por link), o None."""
+    signature = song_signature(title, artist)
+    for title_key, artist_key, url, status in event.requests.values_list(
+        "title_key", "artist_key", "reference_url", "status"
+    ):
+        if song_signature(title_key, artist_key) == signature or (identity and link_identity(url) == identity):
+            return status
+    return None
+
+
 def register_song_request(*, guest_data, song_data, client_ip=None, device_id="", event=None, experience=None):
     """
     Crea (o actualiza) el asistente y registra su canción.
 
     Lanza LimitReached si se superó el cupo del correo, del dispositivo o de la IP,
-    y DuplicateSong si esa misma canción ya fue pedida con ese correo (en el mismo evento).
+    SongAlreadyInEvent si alguien ya pidió esa canción (o ese mismo link) en el evento,
+    y DuplicateSong si esa misma canción ya fue pedida con ese correo (pedidos sin evento).
     """
     email = guest_data["email"].strip().lower()
     if event is not None:
@@ -261,6 +281,13 @@ def register_song_request(*, guest_data, song_data, client_ip=None, device_id=""
             raise LimitReached("ip")
 
         identity = link_identity(song_data.get("reference_url", ""))
+        if event is not None:
+            # Bloquea el evento: dos personas pidiendo la misma canción al mismo tiempo no pasan las dos.
+            type(event).objects.select_for_update().filter(pk=event.pk).first()
+            existing = _same_song_in_event(event, song_data["title"], song_data["artist"], identity)
+            if existing:
+                raise SongAlreadyInEvent(existing)
+
         if identity:
             title_key = normalize_key(song_data["title"])
             for url, other_key in guest.requests.filter(event=event).exclude(reference_url="").values_list(
