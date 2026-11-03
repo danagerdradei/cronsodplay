@@ -14,3 +14,6 @@ htmlcov/
 
 # Capturas de pantalla sueltas (no son recursos de la app)
 static/img/WhatsApp Image *
+
+# Configuración local de herramientas (Claude Code)
+.claude/
