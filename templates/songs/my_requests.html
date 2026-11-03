@@ -31,7 +31,7 @@
           <div class="song-main">
             <strong>{{ song.title }}</strong>
             <span>{{ song.artist }} · {{ song.get_genre_display }}</span>
-            <small class="muted">{{ song.venue.name }} · {{ song.created_at|date:"d M, h:i A" }}</small>
+            <small class="muted">{% if song.event %}{{ song.event.name }} · {% endif %}{{ song.venue.name }} · {{ song.created_at|date:"d M, h:i A" }}</small>
           </div>
           <span class="status status-{{ song.status }}">{{ song.get_status_display }}</span>
         </li>
@@ -41,8 +41,28 @@
     <p class="muted">Aún no tienes canciones con este correo.</p>
   {% endif %}
 
-  {% if remaining %}
+  {% if quotas %}
+    <h3 class="pq-subtitle quota-title">Tu cupo por evento</h3>
+    <ul class="song-list">
+      {% for q in quotas %}
+        <li class="song-card song-card-wrap">
+          <div class="song-main">
+            <strong>{{ q.event.name }}</strong>
+            <span class="muted">{{ q.event.venue.name }}</span>
+          </div>
+          {% if q.remaining %}
+            <span class="badge">Te quedan {{ q.remaining }} de {{ q.max }}</span>
+            {% if q.event.accepting_requests %}<a class="btn btn-primary btn-sm" href="{{ q.event.get_absolute_url }}">Pedir</a>{% else %}<span class="status status-paused">{% icon "pause" %} Pausado</span>{% endif %}
+          {% else %}
+            <span class="status status-rejected">Ya usaste tus {{ q.max }}</span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% elif remaining %}
     <a class="btn btn-primary btn-block" href="{% url 'songs:request' %}">Pedir canción ({{ remaining }} disponible{{ remaining|pluralize }})</a>
+  {% else %}
+    <p class="muted">Ahora no hay eventos abiertos. Las canciones se piden desde el QR del evento.</p>
   {% endif %}
 </section>
 {% endif %}

@@ -831,3 +831,4 @@ form.inline { display: inline-flex; }
   .song-card-wrap > .btn, .song-card-wrap > form { margin-left: auto; }
 }
 .nowrap { white-space: nowrap; }
+.quota-title { margin: 1.25rem 0 .6rem; }

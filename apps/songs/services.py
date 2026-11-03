@@ -233,6 +233,19 @@ def remaining(email=None, device_id=None, event=None):
     return min(values)
 
 
+def quota_by_event(email, device_id=None):
+    """Cupo de la persona en cada evento abierto (lo que ve en "Mis canciones" y en su perfil)."""
+    from apps.events.models import Event
+
+    rows = []
+    events = Event.objects.filter(is_open=True, finalized_at__isnull=True).select_related("venue")
+    for event in events.order_by("-created_at"):
+        per_person, _ = limits_for(event)
+        left = remaining(email, device_id, event)
+        rows.append({"event": event, "max": per_person, "remaining": left, "used": per_person - left})
+    return rows
+
+
 def reset_limit(guest, user, event=None):
     """
     Restablece el cupo de una persona: sus canciones (y las de los dispositivos que usó)

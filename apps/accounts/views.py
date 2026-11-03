@@ -9,9 +9,9 @@ from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
-from apps.events.models import Event
 from apps.songs.models import Guest, SongRequest
-from apps.songs.services import AliasTaken, alias_taken, limits_for, requests_counted_for_limit
+from apps.songs.device import get_device_id
+from apps.songs.services import AliasTaken, alias_taken, quota_by_event
 
 from .forms import ProfileForm
 from .google import GoogleAuthError, verify_credential
@@ -102,12 +102,7 @@ def profile(request):
                 messages.success(request, "Perfil actualizado.")
                 return redirect("accounts:profile")
 
-    open_events = []
-    for event in Event.objects.filter(is_open=True).select_related("venue"):
-        per_person, _ = limits_for(event)
-        used = requests_counted_for_limit(guest, event)
-        open_events.append({"event": event, "used": used, "remaining": max(per_person - used, 0),
-                            "max": per_person})
+    open_events = quota_by_event(guest.email, get_device_id(request)[0])
     history = guest.requests.select_related("venue", "event").order_by("-created_at")[:50]
     return render(request, "accounts/profile.html", {
         "guest": guest, "form": form, "open_events": open_events, "history": history,

@@ -623,3 +623,29 @@ class NoRepeatedSongsPerEventTests(TestCase):
     def test_deleted_song_can_be_requested_again(self):
         SongRequest.objects.all().delete()
         self.assertEqual(self.post("otro@gmail.com", "La Kelly", "Cartel de Santa").status_code, 302)
+
+
+@override_settings(REQUESTS_REQUIRE_EVENT=True, SONG_MAX_PER_EMAIL=3, SONG_MAX_PER_DEVICE=0, SONG_MAX_PER_IP=0,
+                   YOUTUBE_API_KEY="")
+class MyRequestsQuotaTests(TestCase):
+    """"Mis canciones" muestra el cupo real de cada evento abierto, no un número genérico."""
+
+    def setUp(self):
+        self.venue = Venue.objects.create(name="La Casa del Hip Hop")
+        self.event = Event.objects.create(name="Houseofhiphoplandia", venue=self.venue, max_per_person=3)
+        self.full = Event.objects.create(name="Viernes", venue=self.venue, max_per_person=1)
+        for event, title in ((self.event, "Uno"), (self.event, "Dos"), (self.full, "Tres")):
+            self.client.post(event.get_absolute_url(), {**guest_data(), "venue": self.venue.pk, "title": title,
+                                                         "artist": "X", "genre": "pop", "venue_stars": 5, "event_stars": 5})
+
+    def test_shows_remaining_per_event(self):
+        page = self.client.get(reverse("songs:my_requests"))
+        self.assertContains(page, "Te quedan 1 de 3")
+        self.assertContains(page, "Ya usaste tus 1")
+        self.assertNotContains(page, "Pedir canción (")
+        self.assertContains(page, self.event.get_absolute_url())
+
+    def test_finalized_events_are_not_listed(self):
+        from django.utils import timezone
+        Event.objects.filter(pk=self.full.pk).update(finalized_at=timezone.now(), is_open=False)
+        self.assertNotContains(self.client.get(reverse("songs:my_requests")), "Ya usaste tus 1")

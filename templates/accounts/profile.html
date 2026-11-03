@@ -41,8 +41,12 @@
               <strong>{{ item.event.name }}</strong>
               <span class="muted">{{ item.event.venue.name }}</span>
             </div>
-            <span class="badge">{{ item.remaining }} de {{ item.max }} disponibles</span>
-            {% if item.remaining %}<a class="btn btn-primary btn-sm" href="{{ item.event.get_absolute_url }}">Pedir</a>{% endif %}
+            {% if item.remaining %}
+              <span class="badge">{{ item.remaining }} de {{ item.max }} disponibles</span>
+              {% if item.event.accepting_requests %}<a class="btn btn-primary btn-sm" href="{{ item.event.get_absolute_url }}">Pedir</a>{% else %}<span class="status status-paused">{% icon "pause" %} Pausado</span>{% endif %}
+            {% else %}
+              <span class="status status-rejected">Ya usaste tus {{ item.max }}</span>
+            {% endif %}
           </li>
         {% endfor %}
       </ul>

@@ -22,6 +22,7 @@ from .services import (
     IdentityMismatch,
     LimitReached,
     limits_for,
+    quota_by_event,
     register_song_request,
     remaining,
     remaining_for_device,
@@ -233,7 +234,7 @@ def my_requests(request):
 
     email = request.session.get(SESSION_EMAIL_KEY)
     songs = (
-        SongRequest.objects.filter(guest__email=email).select_related("venue").order_by("-created_at")
+        SongRequest.objects.filter(guest__email=email).select_related("venue", "event").order_by("-created_at")
         if email
         else SongRequest.objects.none()
     )
@@ -244,7 +245,10 @@ def my_requests(request):
             "form": form,
             "email": email,
             "songs": songs,
-            "remaining": remaining(email, get_device_id(request)[0]) if email else None,
+            # Las canciones se piden por evento: se muestra el cupo de cada evento abierto.
+            "quotas": quota_by_event(email, get_device_id(request)[0]) if email else [],
+            "remaining": remaining(email, get_device_id(request)[0])
+            if email and not settings.REQUESTS_REQUIRE_EVENT else None,
         },
     )
 
