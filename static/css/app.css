@@ -783,3 +783,42 @@ form.inline { display: inline-flex; }
   border: 1px solid rgba(201, 162, 28, .45); box-shadow: 0 0 40px -10px rgba(201, 162, 28, .55);
 }
 .notice-icon .icon { width: 40px; height: 40px; stroke-width: 1.6; }
+
+/* --- Barra superior: menú desplegable en celular (☰) -------------------- */
+.nav-links { display: flex; align-items: center; gap: inherit; }
+.nav-links .icon, .nav-menu-only { display: none; }
+.nav-toggle { display: none; }
+@media (max-width: 640px) {
+  .nav-toggle {
+    display: inline-grid; place-items: center; width: 42px; height: 42px; flex: 0 0 auto; padding: 0;
+    border-radius: 12px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); cursor: pointer;
+  }
+  .nav-toggle[aria-expanded="true"] { border-color: var(--primary); color: var(--primary); }
+  .nav-toggle .icon { width: 22px; height: 22px; }
+  .nav-toggle .i-close, .nav-toggle[aria-expanded="true"] .i-open { display: none; }
+  .nav-toggle[aria-expanded="true"] .i-close { display: block; }
+
+  .nav-links {
+    position: absolute; top: calc(100% + 1px); left: 0; right: 0; z-index: 20;
+    flex-direction: column; align-items: stretch; gap: 0; padding: .5rem .75rem .9rem;
+    background: #0a0a0a;
+    border-bottom: 1px solid rgba(201, 162, 28, .35); box-shadow: 0 24px 40px -12px rgba(0, 0, 0, .9);
+    opacity: 0; visibility: hidden; transform: translateY(-8px);
+    transition: opacity .18s ease, transform .18s ease, visibility 0s linear .18s;
+  }
+  .nav-links.open { opacity: 1; visibility: visible; transform: none; transition: opacity .18s ease, transform .18s ease; }
+  .nav-links > a, .nav-links .link-btn {
+    display: flex; align-items: center; gap: .8rem; width: 100%; min-height: 50px; padding: 0 .6rem;
+    font-size: 1.02rem; font-weight: 600; color: var(--text); text-align: left; border-radius: 10px;
+  }
+  .nav-links > a + a, .nav-links > a + form { border-top: 1px solid var(--border); }
+  .nav-links > a:hover, .nav-links .link-btn:hover { background: var(--surface-2); color: var(--primary-2); }
+  .nav-links .icon { display: block; width: 20px; height: 20px; color: var(--primary); }
+  .nav-menu-only { display: flex; }
+  .nav-links form.inline { display: block; }
+}
+@media (prefers-reduced-motion: reduce) { .nav-links, .nav-links.open { transition: none; } }
+
+/* Título de la tarjeta de evento: el ícono va junto al nombre, no en una línea aparte */
+.ec-title strong { display: flex; align-items: flex-start; gap: .45rem; }
+.ec-title strong .icon { margin-top: .2em; color: var(--primary); }

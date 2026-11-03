@@ -1,5 +1,10 @@
 <span class="who">{% icon "headphones" %} {{ user.get_short_name|default:user.username }}</span>
-{% if is_platform_admin %}<a href="{% url 'control:dashboard' %}">{% icon "shield" %} Control</a>{% endif %}
-<form method="post" action="{% url 'dj:logout' %}" class="inline">
-  {% csrf_token %}<button class="link-btn" type="submit">Salir</button>
-</form>
+<div class="nav-links" id="nav-links">
+  {% if is_platform_admin %}<a href="{% url 'control:dashboard' %}">{% icon "shield" %} Control</a>{% endif %}
+  <a class="nav-menu-only" href="{% url 'dj:panel' %}">{% icon "music" %} Cola de canciones</a>
+  <a class="nav-menu-only" href="{% url 'songs:request' %}">{% icon "eye" %} Vista de público</a>
+  <form method="post" action="{% url 'dj:logout' %}" class="inline">
+    {% csrf_token %}<button class="link-btn" type="submit">{% icon "logout" %} Salir</button>
+  </form>
+</div>
+<button type="button" class="nav-toggle" aria-controls="nav-links" aria-expanded="false" aria-label="Abrir menú">{% icon "menu" "i-open" %}{% icon "x" "i-close" %}</button>

@@ -23,8 +23,11 @@
     </a>
     <nav class="topnav">
       {% block nav %}
-        <a href="{% url 'songs:request' %}">Pedir</a>
-        <a href="{% url 'songs:my_requests' %}">Mis canciones</a>
+        <div class="nav-links" id="nav-links">
+          <a href="{% url 'songs:request' %}">{% icon "music" %} Pedir</a>
+          <a href="{% url 'songs:my_requests' %}">{% icon "playlist" %} Mis canciones</a>
+          {% if current_guest %}<a class="nav-menu-only" href="{% url 'accounts:profile' %}">{% icon "user" %} Mi perfil</a>{% endif %}
+        </div>
         {% if current_guest %}
           <a class="nav-profile" href="{% url 'accounts:profile' %}" title="Mi perfil">
             {% if current_guest.picture_url %}<img class="avatar" src="{{ current_guest.picture_url }}" alt="" width="30" height="30" referrerpolicy="no-referrer">{% else %}<span class="avatar avatar-empty">{{ current_guest.first_name|first|upper }}</span>{% endif %}
@@ -40,6 +43,7 @@
         {% else %}
           <button type="button" class="btn btn-ghost btn-sm staff-btn" data-open-staff-login aria-haspopup="dialog" title="Acceso DJ">{% icon "headphones" %}<span class="staff-btn-label"> Acceso DJ</span></button>
         {% endif %}
+        <button type="button" class="nav-toggle" aria-controls="nav-links" aria-expanded="false" aria-label="Abrir menú">{% icon "menu" "i-open" %}{% icon "x" "i-close" %}</button>
       {% endblock %}
     </nav>
   </header>
@@ -130,6 +134,23 @@
   <footer class="footer">
     <small>{{ APP_NAME }} · Hecho para la pista</small>
   </footer>
+  <script>
+    // Menú desplegable del celular (☰): abre/cierra la lista de enlaces de la barra superior.
+    (() => {
+      const btn = document.querySelector(".nav-toggle");
+      const menu = document.getElementById("nav-links");
+      if (!btn || !menu) return;
+      const setOpen = (open) => {
+        btn.setAttribute("aria-expanded", String(open));
+        btn.setAttribute("aria-label", open ? "Cerrar menú" : "Abrir menú");
+        menu.classList.toggle("open", open);
+      };
+      btn.addEventListener("click", (e) => { e.stopPropagation(); setOpen(!menu.classList.contains("open")); });
+      document.addEventListener("click", (e) => { if (!menu.contains(e.target)) setOpen(false); });
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape") setOpen(false); });
+      matchMedia("(min-width: 641px)").addEventListener("change", () => setOpen(false));
+    })();
+  </script>
   {% block scripts %}{% endblock %}
 </body>
 </html>
