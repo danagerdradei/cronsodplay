@@ -822,3 +822,12 @@ form.inline { display: inline-flex; }
 /* Título de la tarjeta de evento: el ícono va junto al nombre, no en una línea aparte */
 .ec-title strong { display: flex; align-items: flex-start; gap: .45rem; }
 .ec-title strong .icon { margin-top: .2em; color: var(--primary); }
+
+/* Filas de evento (perfil, persona): en celular el nombre ocupa la línea y la cuenta + botón bajan */
+.song-main strong { overflow-wrap: anywhere; }
+.song-card-wrap { flex-wrap: wrap; }
+@media (max-width: 520px) {
+  .song-card-wrap .song-main { flex: 1 1 100%; }
+  .song-card-wrap > .btn, .song-card-wrap > form { margin-left: auto; }
+}
+.nowrap { white-space: nowrap; }
