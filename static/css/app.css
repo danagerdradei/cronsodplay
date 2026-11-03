@@ -725,3 +725,16 @@ input, select, textarea, button { max-width: 100%; }
 .form.is-preview { opacity: .72; }
 /* Botón eliminar en la cola del DJ */
 .btn-icon.del:hover { background: var(--danger); color: #fff; }
+
+/* --- Móvil: que el contenido largo (título del video, correo) no ensanche el formulario --- */
+/* Un <fieldset> por defecto no se encoge por debajo de su contenido (min-width: min-content). */
+fieldset { min-width: 0; max-width: 100%; }
+.form, .form .grid-2 > *, .field { min-width: 0; }
+.link-preview { min-width: 0; max-width: 100%; }
+.link-preview .lp-text { flex: 1 1 auto; }
+.link-preview .lp-note { white-space: normal; }
+.identity-card strong, .identity-card small { overflow-wrap: anywhere; }
+@media (max-width: 480px) {
+  .identity-card .link-btn { flex-basis: 100%; margin-left: 0; text-align: left; }
+  .link-preview img { width: 56px; height: 42px; }
+}
