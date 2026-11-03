@@ -738,3 +738,7 @@ fieldset { min-width: 0; max-width: 100%; }
   .identity-card .link-btn { flex-basis: 100%; margin-left: 0; text-align: left; }
   .link-preview img { width: 56px; height: 42px; }
 }
+
+/* Correo de quien pidió (solo panel del DJ) */
+.q-email { display: inline-block; font-size: .8rem; color: var(--accent); overflow-wrap: anywhere; margin-top: .1rem; }
+.q-email:hover { color: var(--link); text-decoration: underline; }

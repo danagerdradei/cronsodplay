@@ -170,7 +170,7 @@ La creación del asistente usa un *savepoint* (`transaction.atomic()` anidado) p
 - **Acceso único** en `/acceso/` (`DjLoginView` + `StaffAuthenticationForm`): solo entran DJ, Admin o staff; el login propio del `/admin/` redirige aquí.
 - Los grupos se crean con `python manage.py setup_roles` (idempotente, se ejecuta en cada arranque del contenedor).
 - Decoradores en [apps/dj/permissions.py](../apps/dj/permissions.py): `dj_required` (HTML → redirige a login) y `dj_api_required` (JSON → 401/403).
-- La serialización para el DJ ([apps/dj/serializers.py](../apps/dj/serializers.py)) expone `requester` = alias o nombre completo; **nunca** correo ni celular.
+- La serialización para el DJ ([apps/dj/serializers.py](../apps/dj/serializers.py)) expone `requester` (alias o nombre) y `requester_email`; **nunca** el celular. La cola pública no muestra correos.
 
 ## 7. Administración (`/admin/`)
 

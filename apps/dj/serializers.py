@@ -29,7 +29,7 @@ def serialize_youtube(data, song=None):
 
 
 def serialize_request(song, position=None):
-    """Representación JSON de una solicitud para el DJ (sin correo ni celular)."""
+    """Representación JSON de una solicitud para el DJ (con correo; nunca el celular)."""
     created = timezone.localtime(song.created_at)
     return {
         "id": song.pk,
@@ -44,6 +44,7 @@ def serialize_request(song, position=None):
         "youtube": serialize_youtube(song.youtube_data, song),
         "rating": rating_summary(song),
         "requester": song.guest.display_name,
+        "requester_email": song.guest.email,  # solo en el panel del DJ (la cola pública no lo muestra)
         "venue": {"slug": song.venue.slug, "name": song.venue.name},
         "event": song.event.name if song.event_id else None,
         "status": song.status,

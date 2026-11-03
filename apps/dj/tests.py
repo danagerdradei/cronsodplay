@@ -30,14 +30,18 @@ class DjApiTests(TestCase):
         self.client.login(username="x", password="pass12345")
         self.assertEqual(self.client.get(reverse("dj:api_requests")).status_code, 403)
 
-    def test_dj_sees_queue_without_private_data(self):
+    def test_dj_sees_requester_email_but_never_phone(self):
         self.client.login(username="dj", password="pass12345")
         data = self.client.get(reverse("dj:api_requests")).json()
         self.assertEqual(data["counts"]["pending"], 1)
         item = data["results"][0]
         self.assertEqual(item["requester"], "Anita")
-        self.assertNotIn("email", json.dumps(item))
+        self.assertEqual(item["requester_email"], "a@b.com")
         self.assertNotIn("3001234567", json.dumps(item))
+
+    def test_public_queue_never_shows_email(self):
+        data = self.client.get(reverse("songs:public_queue")).json()
+        self.assertNotIn("a@b.com", json.dumps(data))
 
     def test_dj_marks_song_as_played(self):
         self.client.login(username="dj", password="pass12345")

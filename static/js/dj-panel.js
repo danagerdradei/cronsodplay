@@ -57,6 +57,13 @@
       li.querySelector(".pos").textContent = state.status === "pending" ? it.position : "";
       li.querySelector(".q-title").textContent = it.title;
       li.querySelector(".q-artist").textContent = it.artist;
+      if (it.requester_email) {
+        const mail = li.querySelector(".q-email");
+        mail.href = `mailto:${it.requester_email}`;
+        mail.textContent = `✉️ ${it.requester_email}`;
+        mail.title = `Escribir a ${it.requester}`;
+        mail.hidden = false;
+      }
       li.querySelector(".q-meta").textContent =
         `${it.genre_label} · pedida por ${it.requester} · ${it.created_at_display}` +
         (state.venue ? "" : ` · ${it.venue.name}`) +
