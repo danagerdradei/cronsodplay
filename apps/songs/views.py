@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_http_methods
@@ -68,11 +69,32 @@ def request_song(request, venue_slug=None, event=None):
         venue = event.venue
     else:
         venue = get_object_or_404(Venue, slug=venue_slug, is_active=True) if venue_slug else None
+        if settings.REQUESTS_REQUIRE_EVENT:
+            return choose_event(request, venue)
     device_id, new_device = get_device_id(request)
     response = _request_song(request, venue, device_id, event)
     if new_device:
         set_device_cookie(response, device_id)
     return response
+
+
+def choose_event(request, venue=None):
+    """
+    Sin evento no se piden canciones: se muestran los eventos abiertos (de esa discoteca, si viene
+    del QR del local). Si la discoteca tiene un solo evento abierto, se entra directo.
+    """
+    from apps.events.models import Event
+
+    events = Event.objects.filter(is_open=True, finalized_at__isnull=True, venue__is_active=True)
+    if venue is not None:
+        events = events.filter(venue=venue)
+    events = list(events.select_related("venue").order_by("venue__name", "-created_at"))
+    if venue is not None and len(events) == 1:
+        return redirect(events[0].get_absolute_url())
+    groups = {}
+    for e in events:
+        groups.setdefault(e.venue_id, {"venue": e.venue, "events": []})["events"].append(e)
+    return render(request, "songs/choose_event.html", {"groups": list(groups.values()), "venue": venue})
 
 
 def _request_song(request, venue, device_id, event=None):

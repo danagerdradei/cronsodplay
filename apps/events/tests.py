@@ -406,3 +406,167 @@ class StaffPreviewAndDeleteTests(TestCase):
     def test_playlist_has_delete_button(self):
         self.client.login(username="djcronso", password="pass12345")
         self.assertContains(self.client.get(reverse("events:dj_playlist", args=[self.event.code])), "data-delete")
+
+
+
+@override_settings(SONG_MAX_PER_EMAIL=3, SONG_MAX_PER_DEVICE=0, SONG_MAX_PER_IP=0, YOUTUBE_API_KEY="")
+class PauseFinalizeHistoryTests(TestCase):
+    """El DJ pausa/reanuda los pedidos y finaliza el evento, que queda con su playlist en el historial."""
+
+    def setUp(self):
+        from apps.songs.models import Guest, SongRating, SongRequest
+        call_command("setup_roles", verbosity=0)
+        self.venue = Venue.objects.create(name="La Casa del Hip Hop")
+        self.dj = User.objects.create_user("djcronso", password="pass12345", first_name="DJ Cronso")
+        self.other = User.objects.create_user("otro", password="pass12345")
+        for u in (self.dj, self.other):
+            u.groups.add(Group.objects.get(name=DJ_GROUP))
+        User.objects.create_superuser("admin", "a@x.com", "pass12345")
+        self.event = Event.objects.create(name="Houseofhiphoplandia", venue=self.venue, dj=self.dj)
+        guest = Guest.objects.create(email="lalo@gmail.com", first_name="Lalo", last_name="R", alias="Lalondra", phone="300")
+        self.song = SongRequest.objects.create(guest=guest, venue=self.venue, event=self.event, title="Buffalo Soldier",
+                                               artist="Bob Marley", genre="reggae", status="played",
+                                               reference_url="https://youtu.be/S5FCdx7Dn0o")
+        SongRating.objects.create(song=self.song, device_id="d1", stars=4)
+        self.client.login(username="djcronso", password="pass12345")
+
+    def post_song(self, title):
+        data = {**guest_data("nuevo@gmail.com"), "venue": self.venue.pk, "title": title, "artist": "X", "genre": "pop"}
+        return self.client_class().post(self.event.get_absolute_url(), data)
+
+    def test_pause_shows_notice_and_blocks_requests(self):
+        from apps.songs.models import SongRequest
+        self.client.post(reverse("events:dj_pause", args=[self.event.code]))
+        self.event.refresh_from_db()
+        self.assertFalse(self.event.accepting_requests)
+        self.assertEqual(self.event.status_key, "paused")
+        page = self.client_class().get(self.event.get_absolute_url())
+        self.assertContains(page, "El DJ pausó los pedidos")
+        self.assertContains(page, 'id="public-queue"')  # la cola sigue visible
+        self.post_song("Durante la pausa")
+        self.assertFalse(SongRequest.objects.filter(title="Durante la pausa").exists())
+
+    def test_resume_accepts_requests_again(self):
+        from apps.songs.models import SongRequest
+        self.client.post(reverse("events:dj_pause", args=[self.event.code]))
+        self.client.post(reverse("events:dj_pause", args=[self.event.code]))
+        self.event.refresh_from_db()
+        self.assertTrue(self.event.accepting_requests)
+        self.assertEqual(self.post_song("Ya reanudado").status_code, 302)
+        self.assertTrue(SongRequest.objects.filter(title="Ya reanudado").exists())
+
+    def test_finalize_requires_code_and_saves_snapshot(self):
+        url = reverse("events:dj_finalize", args=[self.event.code])
+        self.client.post(url, {"confirmar": "MAL"})
+        self.event.refresh_from_db()
+        self.assertIsNone(self.event.finalized_at)
+        response = self.client.post(url, {"confirmar": self.event.code.lower()})
+        self.assertRedirects(response, reverse("events:dj_history_detail", args=[self.event.code]))
+        self.event.refresh_from_db()
+        self.assertTrue(self.event.is_finalized)
+        self.assertFalse(self.event.is_open)
+        snap = self.event.playlist_snapshot
+        self.assertEqual(snap["summary"]["total"], 1)
+        self.assertEqual(snap["summary"]["played"], 1)
+        song = snap["songs"][0]
+        self.assertEqual((song["title"], song["requester"], song["requester_email"]), ("Buffalo Soldier", "Lalondra", "lalo@gmail.com"))
+        self.assertEqual((song["rating_avg"], song["rating_n"]), (4.0, 1))
+
+    def test_finalized_event_is_closed_for_good(self):
+        from apps.songs.models import SongRequest
+        self.client.post(reverse("events:dj_finalize", args=[self.event.code]), {"confirmar": self.event.code})
+        self.assertEqual(self.client_class().get(self.event.get_absolute_url()).status_code, 410)
+        self.client.post(reverse("events:dj_toggle", args=[self.event.code]))  # intentar reabrir
+        self.event.refresh_from_db()
+        self.assertFalse(self.event.is_open)
+        self.assertNotContains(self.client.get(reverse("events:dj_list")), 'class="event-card')  # ya no está en "Mis eventos"
+        # El historial no cambia aunque después se borren las canciones
+        SongRequest.objects.all().delete()
+        self.assertContains(self.client.get(reverse("events:dj_history_detail", args=[self.event.code])), "Buffalo Soldier")
+
+    def test_history_list_detail_and_csv(self):
+        self.client.post(reverse("events:dj_finalize", args=[self.event.code]), {"confirmar": self.event.code})
+        self.assertContains(self.client.get(reverse("events:dj_history")), "Houseofhiphoplandia")
+        detail = self.client.get(reverse("events:dj_history_detail", args=[self.event.code]))
+        self.assertContains(detail, "lalo@gmail.com")
+        csv_response = self.client.get(reverse("events:dj_history_csv", args=[self.event.code]))
+        self.assertEqual(csv_response["Content-Type"], "text/csv; charset=utf-8")
+        self.assertIn("Buffalo Soldier", csv_response.content.decode("utf-8"))
+
+    def test_history_is_private_to_owner_and_admin(self):
+        self.client.post(reverse("events:dj_finalize", args=[self.event.code]), {"confirmar": self.event.code})
+        self.client.login(username="otro", password="pass12345")
+        self.assertEqual(self.client.get(reverse("events:dj_history_detail", args=[self.event.code])).status_code, 404)
+        self.assertNotContains(self.client.get(reverse("events:dj_history")), "Houseofhiphoplandia")
+        self.client.login(username="admin", password="pass12345")
+        self.assertEqual(self.client.get(reverse("events:dj_history_detail", args=[self.event.code])).status_code, 200)
+
+    def test_other_dj_cannot_pause_or_finalize(self):
+        self.client.login(username="otro", password="pass12345")
+        self.assertEqual(self.client.post(reverse("events:dj_pause", args=[self.event.code])).status_code, 404)
+        self.assertEqual(self.client.post(reverse("events:dj_finalize", args=[self.event.code]),
+                                          {"confirmar": self.event.code}).status_code, 404)
+
+
+
+@override_settings(REQUESTS_REQUIRE_EVENT=True, SONG_MAX_PER_EMAIL=3, SONG_MAX_PER_DEVICE=0, SONG_MAX_PER_IP=0,
+                   YOUTUBE_API_KEY="")
+class RequestsRequireEventTests(TestCase):
+    """Sin evento no se piden canciones: "Pedir" muestra los eventos abiertos y el QR del local lleva al evento."""
+
+    def setUp(self):
+        self.casa = Venue.objects.create(name="La Casa del Hip Hop", city="Bello")
+        self.cloro = Venue.objects.create(name="ClorofilaTaller")
+        self.hiphop = Event.objects.create(name="Houseofhiphoplandia", venue=self.casa)
+        self.cloro_a = Event.objects.create(name="Viernes", venue=self.cloro)
+        self.cloro_b = Event.objects.create(name="Sábado", venue=self.cloro, accepting_requests=False)
+        Event.objects.create(name="Cerrado", venue=self.cloro, is_open=False)
+
+    def test_pedir_lists_open_events_by_venue(self):
+        response = self.client.get(reverse("songs:request"))
+        self.assertContains(response, "¿Dónde estás esta noche?")
+        for name in ("Houseofhiphoplandia", "Viernes", "Sábado", "La Casa del Hip Hop", "ClorofilaTaller"):
+            self.assertContains(response, name)
+        self.assertNotContains(response, ">🎉 Cerrado<")
+        self.assertContains(response, self.hiphop.get_absolute_url())
+        self.assertNotContains(response, 'name="title"')  # no hay formulario suelto
+
+    def test_venue_with_one_event_goes_straight_to_it(self):
+        response = self.client.get(reverse("songs:request_for_venue", args=[self.casa.slug]))
+        self.assertRedirects(response, self.hiphop.get_absolute_url(), fetch_redirect_response=False)
+
+    def test_venue_with_several_events_lets_choose(self):
+        response = self.client.get(reverse("songs:request_for_venue", args=[self.cloro.slug]))
+        self.assertContains(response, "Viernes")
+        self.assertContains(response, "Pausado")
+        self.assertNotContains(response, "Houseofhiphoplandia")
+
+    def test_venue_without_events_shows_notice(self):
+        empty = Venue.objects.create(name="Bar Vacío")
+        self.assertContains(self.client.get(reverse("songs:request_for_venue", args=[empty.slug])),
+                            "Ahora no hay eventos abiertos")
+
+    def test_cannot_request_without_event(self):
+        from apps.songs.models import SongRequest
+        data = {**guest_data(), "venue": self.cloro.pk, "title": "Suelta", "artist": "X", "genre": "pop"}
+        self.client.post(reverse("songs:request_for_venue", args=[self.cloro.slug]), data)
+        self.client.post(reverse("songs:request"), data)
+        self.assertFalse(SongRequest.objects.exists())
+
+    def test_quota_cannot_be_bypassed_outside_the_event(self):
+        from apps.songs.models import SongRequest
+        url = self.hiphop.get_absolute_url()
+        for title in ("Uno", "Dos"):
+            self.client.post(url, {**guest_data(), "venue": self.casa.pk, "title": title, "artist": "X", "genre": "pop"})
+        self.client.post(url, {**guest_data(), "venue": self.casa.pk, "title": "Tres", "artist": "X", "genre": "pop",
+                               "venue_stars": 5, "event_stars": 5})
+        # Ya usó sus 3 en el evento: por "Pedir" no hay otro cupo
+        self.client.post(reverse("songs:request"), {**guest_data(), "venue": self.casa.pk, "title": "Cuatro",
+                                                     "artist": "X", "genre": "pop"})
+        self.assertEqual(SongRequest.objects.count(), 3)
+        self.assertContains(self.client.post(url, {**guest_data(), "venue": self.casa.pk, "title": "Cinco",
+                                                    "artist": "X", "genre": "pop"}), "Gracias por tu buena energía")
+
+    def test_venue_qr_leads_to_its_event(self):
+        response = self.client.get(reverse("venues:entry", args=[self.casa.slug]), follow=True)
+        self.assertEqual(response.redirect_chain[-1][0], self.hiphop.get_absolute_url())

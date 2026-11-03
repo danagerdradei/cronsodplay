@@ -19,7 +19,7 @@
       <p class="eyebrow">🎵 Playlist del evento · {{ fixed_event.venue.name }}</p>
       <h1>{{ fixed_event.name }} <span class="live-dot" title="En vivo"></span></h1>
       <div class="genre-tags left">
-        {% if fixed_event.is_open %}<span class="status status-played">Abierto</span>{% else %}<span class="status status-rejected">Cerrado</span>{% endif %}
+        <span class="status status-{{ fixed_event.status_key }}">{{ fixed_event.status_label }}</span>
         <span class="chip">código <code>{{ fixed_event.code }}</code></span>
         <span class="chip">{{ fixed_event.max_per_person }} por persona</span>
         {% for g in fixed_event.genre_labels %}<span class="chip">{{ g }}</span>{% empty %}<span class="chip">🎧 Todos los géneros</span>{% endfor %}
@@ -30,6 +30,10 @@
       {% if rating.dj_n %}<span class="rating-badge">🎧 DJ ★ {{ rating.dj_avg|floatformat:1 }} <small>({{ rating.dj_n }})</small></span>{% endif %}
       <div class="row-actions">
         <a class="btn btn-ghost btn-sm" href="{% url 'events:dj_detail' fixed_event.code %}">🔗 Link y QR</a>
+        {% if fixed_event.is_open and not fixed_event.is_finalized %}<form method="post" action="{% url 'events:dj_pause' fixed_event.code %}" class="inline">
+          {% csrf_token %}<input type="hidden" name="volver" value="{{ request.get_full_path }}">
+          <button class="btn btn-ghost btn-sm" type="submit">{% if fixed_event.accepting_requests %}⏸️ Pausar pedidos{% else %}▶️ Reanudar pedidos{% endif %}</button>
+        </form>{% endif %}
         {% if is_platform_admin %}
           <a class="btn btn-ghost btn-sm" href="{% url 'control:event_edit' fixed_event.code %}">✏️ Editar</a>
           <a class="btn btn-ghost btn-sm" href="{% url 'control:events' %}?evento={{ fixed_event.code }}#reset-form">♻️ Reiniciar</a>

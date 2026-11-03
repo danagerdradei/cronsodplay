@@ -13,5 +13,10 @@ urlpatterns = [
     path("dj/eventos/<str:code>/", views.dj_detail, name="dj_detail"),
     path("dj/eventos/<str:code>/playlist/", views.dj_playlist, name="dj_playlist"),
     path("dj/eventos/<str:code>/estado/", views.dj_toggle, name="dj_toggle"),
+    path("dj/eventos/<str:code>/pausa/", views.dj_pause, name="dj_pause"),
+    path("dj/eventos/<str:code>/finalizar/", views.dj_finalize, name="dj_finalize"),
+    path("dj/historial/", views.dj_history, name="dj_history"),
+    path("dj/historial/<str:code>/", views.dj_history_detail, name="dj_history_detail"),
+    path("dj/historial/<str:code>/csv/", views.dj_history_csv, name="dj_history_csv"),
     path("dj/eventos/<str:code>/imprimir/", views.dj_print, name="dj_print"),
 ]

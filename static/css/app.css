@@ -742,3 +742,12 @@ fieldset { min-width: 0; max-width: 100%; }
 /* Correo de quien pidió (solo panel del DJ) */
 .q-email { display: inline-block; font-size: .8rem; color: var(--accent); overflow-wrap: anywhere; margin-top: .1rem; }
 .q-email:hover { color: var(--link); text-decoration: underline; }
+
+/* Estados del evento y historial */
+.status-open { background: rgba(61, 220, 132, .15); color: var(--ok); }
+.status-paused { background: rgba(230, 195, 74, .15); color: var(--warn); }
+.status-closed { background: rgba(255, 92, 108, .15); color: var(--danger); }
+.status-finalized { background: rgba(180, 168, 144, .18); color: var(--accent); }
+.history-stats { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); margin-bottom: 1.25rem; }
+.history-queue .q-actions .status { white-space: nowrap; }
+form.inline { display: inline-flex; }

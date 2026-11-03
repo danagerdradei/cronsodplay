@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Pedidos en pausa · {{ event.name }} · {{ APP_NAME }}{% endblock %}
+{% block body_class %}wide{% endblock %}
+{% block content %}
+<div class="request-layout">
+  <section class="card center error-card error-restricted">
+    <div class="error-icon" aria-hidden="true">⏸️</div>
+    <p class="eyebrow">🎉 {{ event.name }} · {{ event.venue.name }}</p>
+    <h1>El DJ pausó los pedidos</h1>
+    <p class="lead">Por un momento no se están recibiendo canciones. Vuelve a intentarlo en unos minutos.</p>
+    <p class="muted">Mientras tanto, mira cómo va la playlist y puntúa lo que pidió la gente.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="{{ event.get_absolute_url }}">🔄 Volver a intentar</a>
+    </div>
+  </section>
+  {% include "partials/public_queue.html" with venue=event.venue event=event %}
+</div>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/platform.js' %}" defer></script><script src="{% static 'js/public-queue.js' %}" defer></script>{% endblock %}

@@ -32,7 +32,7 @@
                 <strong>{{ e.name }}</strong>
                 <span class="muted">📍 {{ e.venue.name }}</span>
               </div>
-              {% if e.is_open %}<span class="status status-played">Abierto</span>{% else %}<span class="status status-rejected">Cerrado</span>{% endif %}
+              <span class="status status-{{ e.status_key }}">{{ e.status_label }}</span>
             </div>
             <p class="ec-meta muted">
               Código <code>{{ e.code }}</code> · {{ e.created_at|date:"d M Y, h:i A" }} · {{ e.max_per_person }} canciones por persona
@@ -48,6 +48,10 @@
             <div class="ec-actions">
               <a class="btn btn-primary btn-sm" href="{% url 'events:dj_playlist' e.code %}">🎵 Playlist</a>
               <a class="btn btn-ghost btn-sm" href="{% url 'events:dj_detail' e.code %}">🔗 Link y QR</a>
+              {% if e.is_open %}<form method="post" action="{% url 'events:dj_pause' e.code %}" class="inline">
+          {% csrf_token %}<input type="hidden" name="volver" value="{{ request.get_full_path }}">
+          <button class="btn btn-ghost btn-sm" type="submit">{% if e.accepting_requests %}⏸️ Pausar pedidos{% else %}▶️ Reanudar pedidos{% endif %}</button>
+        </form>{% endif %}
             </div>
           </li>
         {% endfor %}

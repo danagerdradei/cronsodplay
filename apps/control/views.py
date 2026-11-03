@@ -270,6 +270,9 @@ def event_edit(request, code):
 @admin_required
 def event_toggle(request, code):
     event = get_object_or_404(Event, code=code.upper())
+    if event.is_finalized:
+        messages.error(request, "Este evento ya fue finalizado: su playlist está en el historial.")
+        return redirect("control:events")
     event.is_open = not event.is_open
     event.closed_at = None if event.is_open else timezone.now()
     event.save(update_fields=["is_open", "closed_at"])

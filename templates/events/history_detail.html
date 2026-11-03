@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Historial · {{ event.name }} · {{ APP_NAME }}{% endblock %}
+{% block body_class %}dj{% endblock %}
+{% block nav %}{% include "dj/_header_nav.html" %}{% endblock %}
+{% block content %}
+{% include "dj/_tabs.html" %}
+<p class="back-link"><a href="{% url 'events:dj_history' %}">← Historial</a></p>
+
+<section class="card playlist-head">
+  <div class="playlist-title">
+    <p class="eyebrow">📜 Playlist guardada · {{ event.venue.name }}</p>
+    <h1>{{ event.name }}</h1>
+    <div class="genre-tags left">
+      <span class="status status-finalized">🏁 Finalizado</span>
+      <span class="chip">código <code>{{ event.code }}</code></span>
+      <span class="chip">{{ event.finalized_at|date:"d M Y, h:i A" }}</span>
+      {% for g in event.genre_labels %}<span class="chip">{{ g }}</span>{% endfor %}
+    </div>
+  </div>
+  <div class="playlist-side">
+    {% if summary.ratings.event %}<span class="rating-badge">🎉 Evento ★ {{ summary.ratings.event|floatformat:1 }}</span>{% endif %}
+    {% if summary.ratings.dj %}<span class="rating-badge">🎧 DJ ★ {{ summary.ratings.dj|floatformat:1 }}</span>{% endif %}
+    {% if summary.ratings.venue %}<span class="rating-badge">🏢 Local ★ {{ summary.ratings.venue|floatformat:1 }}</span>{% endif %}
+    <a class="btn btn-primary btn-sm" href="{% url 'events:dj_history_csv' event.code %}">⬇ Descargar CSV</a>
+  </div>
+</section>
+
+<div class="ec-stats history-stats">
+  <div><strong>{{ summary.total|default:0 }}</strong><span>canciones</span></div>
+  <div><strong>{{ summary.played|default:0 }}</strong><span>sonaron</span></div>
+  <div><strong>{{ summary.pending|default:0 }}</strong><span>quedaron en cola</span></div>
+  <div><strong>{{ summary.rejected|default:0 }}</strong><span>no disponibles</span></div>
+  <div><strong>{{ summary.people|default:0 }}</strong><span>personas</span></div>
+</div>
+
+<section class="card">
+  {% if songs %}
+    <ol class="queue history-queue">
+      {% for s in songs %}
+        <li class="queue-item">
+          <span class="pos">{{ s.position }}</span>
+          {% if s.thumbnail %}<img class="q-thumb song-thumb" src="{{ s.thumbnail }}" alt="" referrerpolicy="no-referrer" loading="lazy">{% else %}<span class="q-thumb song-thumb song-thumb-empty" aria-hidden="true">♪</span>{% endif %}
+          <div class="q-main">
+            <strong class="q-title">{{ s.title }}</strong>
+            <span class="q-artist">{{ s.artist }}</span>
+            <small class="q-meta">{{ s.genre }} · pedida por {{ s.requester }} · {{ s.requested_at|slice:"11:16" }}{% if s.rating_n %} · ⭐ {{ s.rating_avg }} ({{ s.rating_n }}){% endif %}</small>
+            <a class="q-email" href="mailto:{{ s.requester_email }}">✉️ {{ s.requester_email }}</a>
+            {% if s.video_title %}<small class="q-video-title">🎬 {{ s.video_title }}</small>{% endif %}
+          </div>
+          <div class="q-links">{% if s.link %}<a class="btn btn-ghost btn-sm" href="{{ s.link }}" target="_blank" rel="noopener">🔗 Link</a>{% endif %}</div>
+          <div class="q-actions"><span class="status status-{{ s.status }}">{{ s.status_label }}</span></div>
+        </li>
+      {% endfor %}
+    </ol>
+  {% else %}
+    <p class="muted center">Este evento terminó sin canciones pedidas.</p>
+  {% endif %}
+</section>
+{% endblock %}

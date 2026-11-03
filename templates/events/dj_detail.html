@@ -12,7 +12,7 @@
     <p class="eyebrow">{{ event.venue.name }}</p>
     <h1>{{ event.name }}</h1>
     <p class="muted">
-      {% if event.is_open %}<span class="status status-played">Abierto</span>{% else %}<span class="status status-rejected">Cerrado</span>{% endif %}
+      <span class="status status-{{ event.status_key }}">{{ event.status_label }}</span>
       · {{ event.max_per_person }} canciones por persona · código <code>{{ event.code }}</code>
     </p>
     <div class="genre-tags">
@@ -51,15 +51,30 @@
     <div class="hero-actions left">
       <a class="btn btn-primary" href="{% url 'events:dj_playlist' event.code %}">🎵 Playlist del evento</a>
       <a class="btn btn-ghost" href="{% url 'dj:limits' %}?evento={{ event.code }}">♻️ Límites del evento</a>
-      <form method="post" action="{% url 'events:dj_toggle' event.code %}">
+      {% if event.is_finalized %}
+        <a class="btn btn-primary" href="{% url 'events:dj_history_detail' event.code %}">📜 Ver en el historial</a>
+      {% elif event.is_open %}
+        <form method="post" action="{% url 'events:dj_pause' event.code %}" class="inline">
+          {% csrf_token %}<input type="hidden" name="volver" value="{{ request.get_full_path }}">
+          <button class="btn btn-ghost" type="submit">{% if event.accepting_requests %}⏸️ Pausar pedidos{% else %}▶️ Reanudar pedidos{% endif %}</button>
+        </form>
+      {% else %}
+        <form method="post" action="{% url 'events:dj_toggle' event.code %}">
+          {% csrf_token %}<button class="btn btn-primary" type="submit">Reabrir evento</button>
+        </form>
+      {% endif %}
+    </div>
+    {% if not event.is_finalized %}
+    <div class="danger-zone">
+      <h3>🏁 Finalizar evento</h3>
+      <p class="hint">Cierra el evento <strong>para siempre</strong> (el link y el QR dejan de recibir pedidos) y guarda la playlist que pidió el público en tu <strong>📜 Historial</strong>. Escribe el código <code>{{ event.code }}</code> para confirmar.</p>
+      <form method="post" action="{% url 'events:dj_finalize' event.code %}" class="copy-row">
         {% csrf_token %}
-        {% if event.is_open %}
-          <button class="btn btn-danger" type="submit" onclick="return confirm('¿Cerrar el evento? El link dejará de recibir pedidos.')">Cerrar evento</button>
-        {% else %}
-          <button class="btn btn-primary" type="submit">Reabrir evento</button>
-        {% endif %}
+        <input type="text" name="confirmar" placeholder="{{ event.code }}" autocomplete="off" autocapitalize="characters" aria-label="Código para confirmar">
+        <button class="btn btn-danger" type="submit">Finalizar</button>
       </form>
     </div>
+    {% endif %}
   </section>
 </div>
 {% endblock %}

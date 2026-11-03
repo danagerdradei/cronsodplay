@@ -198,6 +198,11 @@ if len(sys.argv) > 1 and sys.argv[1] == "test":
 # El botón de Google abre una ventana emergente: "same-origin" (valor por defecto de Django) la bloquea.
 SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
 
+# Las canciones solo se piden desde un evento (su QR o link). "Pedir" muestra primero los eventos abiertos.
+REQUESTS_REQUIRE_EVENT = env_bool("REQUESTS_REQUIRE_EVENT", True)
+if len(sys.argv) > 1 and sys.argv[1] == "test":
+    REQUESTS_REQUIRE_EVENT = False  # las pruebas del flujo sin evento lo activan explícitamente
+
 # --- YouTube Data API v3 (gratis, cuota 10.000 unidades/día) ---
 # Sin API key la app funciona igual, solo que sin vistas/likes/recomendación.
 YOUTUBE_API_KEY = env("YOUTUBE_API_KEY", "")

@@ -73,9 +73,13 @@
                   <a class="btn btn-primary btn-sm" href="{% url 'events:dj_playlist' e.code %}">🎵 Playlist</a>
                   <a class="btn btn-ghost btn-sm" href="{% url 'control:event_edit' e.code %}">✏️ Editar</a>
                   <a class="btn btn-ghost btn-sm" href="{% url 'events:dj_detail' e.code %}">Link y QR</a>
+                  {% if e.is_finalized %}
+                    <a class="btn btn-ghost btn-sm" href="{% url 'events:dj_history_detail' e.code %}">📜 Historial</a>
+                  {% else %}
                   <form method="post" action="{% url 'control:event_toggle' e.code %}" class="inline">
                     {% csrf_token %}<button class="btn btn-ghost btn-sm" type="submit">{% if e.is_open %}Cerrar{% else %}Abrir{% endif %}</button>
                   </form>
+                  {% endif %}
                   {% if e.songs %}<a class="btn btn-ghost btn-sm" href="?evento={{ e.code }}#reset-form">♻️ Reiniciar</a>{% endif %}
                 </div>
               </td>
@@ -84,7 +88,7 @@
               <td class="num">{{ e.pending }}</td>
               <td class="num">{{ e.people }}</td>
               <td>{% if e.rating_n %}<span class="rating-badge">★ {{ e.rating|floatformat:1 }} <small>({{ e.rating_n }})</small></span>{% else %}<span class="muted">—</span>{% endif %}</td>
-              <td>{% if e.is_open %}<span class="status status-played">Abierto</span>{% else %}<span class="status status-rejected">Cerrado</span>{% endif %}</td>
+              <td><span class="status status-{{ e.status_key }}">{{ e.status_label }}</span></td>
             </tr>
           {% endfor %}
         </tbody>

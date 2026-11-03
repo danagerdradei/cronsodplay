@@ -40,6 +40,15 @@ class Event(models.Model):
     # Códigos de SongRequest.Genre que acepta el evento. Vacío = todos los géneros.
     allowed_genres = models.JSONField("géneros permitidos", default=list, blank=True)
     is_open = models.BooleanField("abierto", default=True, db_index=True)
+    # Pausa temporal: el link y el QR siguen activos pero no se reciben pedidos.
+    accepting_requests = models.BooleanField("recibiendo pedidos", default=True)
+    # Finalizado: cerrado para siempre, con la playlist guardada en el historial.
+    finalized_at = models.DateTimeField("finalizado", null=True, blank=True)
+    finalized_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="finalized_events", verbose_name="finalizado por",
+    )
+    playlist_snapshot = models.JSONField("playlist guardada", default=dict, blank=True, editable=False)
     created_at = models.DateTimeField("creado", auto_now_add=True)
     closed_at = models.DateTimeField("cerrado", null=True, blank=True)
 
@@ -58,6 +67,26 @@ class Event(models.Model):
 
     def get_absolute_url(self):
         return reverse("events:entry", args=[self.code])
+
+    @property
+    def is_finalized(self):
+        return self.finalized_at is not None
+
+    @property
+    def is_paused(self):
+        return self.is_open and not self.accepting_requests and not self.is_finalized
+
+    @property
+    def status_key(self):
+        if self.is_finalized:
+            return "finalized"
+        if not self.is_open:
+            return "closed"
+        return "paused" if not self.accepting_requests else "open"
+
+    @property
+    def status_label(self):
+        return {"finalized": "Finalizado", "closed": "Cerrado", "paused": "Pausado", "open": "Abierto"}[self.status_key]
 
     def allows_genre(self, genre):
         return not self.allowed_genres or genre in self.allowed_genres
