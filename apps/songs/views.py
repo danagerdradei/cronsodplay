@@ -14,6 +14,7 @@ from .services import (
     DuplicateSong,
     ExperienceRequired,
     GenreNotAllowed,
+    LinkAlreadyUsed,
     IdentityMismatch,
     LimitReached,
     limits_for,
@@ -117,6 +118,9 @@ def _request_song(request, venue, device_id, event=None):
                 for field in exc.fields:
                     form.add_error(field, "Elige de 1 a 5 estrellas.")
                 form.add_error(None, "Es tu última canción de la noche: califica tu experiencia para enviarla. ⭐")
+            except LinkAlreadyUsed:
+                form.add_error("reference_url", "Ya usaste este mismo link para otra canción. "
+                                                "Pega el link de la canción que estás pidiendo.")
             except GenreNotAllowed:
                 form.add_error("genre", form.fields["genre"].error_messages["invalid_choice"])
             except AliasTaken:

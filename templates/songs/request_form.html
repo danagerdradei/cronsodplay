@@ -36,6 +36,10 @@
       {% include "partials/field.html" with field=form.genre %}
       {% include "partials/field.html" with field=form.reference_url %}
     </div>
+    <div id="link-preview" class="link-preview" data-url="{% url 'songs:link_preview' %}" hidden aria-live="polite">
+      <img alt="" width="64" height="48" referrerpolicy="no-referrer" hidden>
+      <div class="lp-text"><strong></strong><small class="muted"></small><span class="lp-note"></span></div>
+    </div>
     <p class="hint">Pega el link de YouTube o Spotify para que el DJ la encuentre más rápido.</p>
   </fieldset>
 
@@ -107,4 +111,5 @@
   });
 </script>
 <script src="{% static 'js/platform.js' %}" defer></script><script src="{% static 'js/public-queue.js' %}" defer></script>
+<script src="{% static 'js/link-preview.js' %}" defer></script>
 {% endblock %}

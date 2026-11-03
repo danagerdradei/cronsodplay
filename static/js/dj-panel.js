@@ -112,7 +112,15 @@
     if (yt.duration) stats.push(`⏱ ${duration(yt.duration)}`);
     li.querySelector(".q-stats").textContent = stats.join("  ·  ");
 
+    if (yt.title) {
+      const vt = document.createElement("small");
+      vt.className = "q-video-title";
+      vt.textContent = `🎬 ${yt.title}`;
+      li.querySelector(".q-stats").after(vt);
+    }
+
     const reco = li.querySelector(".q-reco");
+    if (yt.link_mismatch) reco.appendChild(chip("⚠️ El link no coincide con la canción", "chip-warn"));
     if (yt.moment_label) reco.appendChild(chip(yt.moment_label, `chip-moment chip-${yt.moment}`));
     if (yt.highlight) reco.appendChild(chip(`🎯 Destacado ${yt.highlight}`));
     for (const tag of yt.tags || []) reco.appendChild(chip(tag));

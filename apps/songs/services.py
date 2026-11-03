@@ -19,7 +19,7 @@ from apps.core.net import ip_in_list
 from . import youtube
 from .analysis import analyze
 from .models import ExperienceRating, Guest, LimitReset, SongRequest, normalize_key
-from .thumbnails import fetch_thumbnail, youtube_video_id
+from .thumbnails import fetch_thumbnail, link_identity, youtube_video_id
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +54,10 @@ class AliasTaken(SongRequestError):
 
 class GenreNotAllowed(SongRequestError):
     """El evento no acepta ese género."""
+
+
+class LinkAlreadyUsed(SongRequestError):
+    """La persona ya usó ese mismo link (video/track) para otra canción en este evento."""
 
 
 class ExperienceRequired(SongRequestError):
@@ -255,6 +259,15 @@ def register_song_request(*, guest_data, song_data, client_ip=None, device_id=""
             raise LimitReached("device")
         if ip_limit_reached(client_ip):
             raise LimitReached("ip")
+
+        identity = link_identity(song_data.get("reference_url", ""))
+        if identity:
+            title_key = normalize_key(song_data["title"])
+            for url, other_key in guest.requests.filter(event=event).exclude(reference_url="").values_list(
+                "reference_url", "title_key"
+            ):
+                if link_identity(url) == identity and other_key != title_key:
+                    raise LinkAlreadyUsed()
 
         if guest.requests.filter(
             event=event,

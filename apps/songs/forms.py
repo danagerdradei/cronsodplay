@@ -68,7 +68,8 @@ class SongRequestForm(forms.Form):
             "email": {"autocomplete": "email", "inputmode": "email", "placeholder": "tucorreo@ejemplo.com"},
             "title": {"placeholder": "Ej: My Name Is"},
             "artist": {"placeholder": "Ej: Eminem"},
-            "reference_url": {"inputmode": "url", "placeholder": "https://open.spotify.com/... o https://youtu.be/..."},
+            "reference_url": {"inputmode": "url", "autocomplete": "off", "spellcheck": "false",
+                              "placeholder": "https://open.spotify.com/... o https://youtu.be/..."},
         }
         for name, extra in attrs.items():
             if name in self.fields:  # con sesión de Google, nombres y correo no están en el formulario

@@ -522,3 +522,65 @@ class ExperienceRatingTests(TestCase):
         dj = self.client_class()
         dj.login(username="djx", password="pass12345")
         self.assertContains(dj.get(reverse("events:dj_list")), "Tu calificación ★ 3,0")
+
+
+
+class LinkVerificationTests(TestCase):
+    """El link pegado se muestra antes de enviar, se avisa si no coincide y no se reutiliza para otra canción."""
+
+    BOOMBASTIC = {"title": "Shaggy - Boombastic (Official Music Video)", "author_name": "Shaggy",
+                  "thumbnail_url": "https://i.ytimg.com/vi/2g5Hz17C4is/hqdefault.jpg"}
+
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+        self.venue = Venue.objects.create(name="ClorofilaTaller")
+        self.url = reverse("songs:request_for_venue", args=[self.venue.slug])
+
+    def test_matching_rules(self):
+        from .thumbnails import link_matches_song
+        self.assertTrue(link_matches_song("Shaggy - Boombastic (Official Video)", "Boombastic", "Shaggy"))
+        self.assertTrue(link_matches_song("Héctor y Tito - Gata Salvaje", "gata salvaje", "Hector & Tito"))
+        self.assertFalse(link_matches_song("Shaggy - Boombastic (Official Video)", "Gata Salvaje", "Hector y Tito"))
+        self.assertFalse(link_matches_song("Shaggy - Boombastic", "Rompe", "Daddy Yankee"))
+        self.assertTrue(link_matches_song("", "Rompe", "Daddy Yankee"))  # sin datos no se alarma
+
+    def test_preview_endpoint_shows_real_video_and_mismatch(self):
+        with patch("apps.songs.thumbnails._oembed", return_value=dict(self.BOOMBASTIC)) as oembed:
+            ok = self.client.get(reverse("songs:link_preview"), {"url": "https://youtu.be/2g5Hz17C4is",
+                                                                 "title": "Boombastic", "artist": "Shaggy"}).json()
+            bad = self.client.get(reverse("songs:link_preview"), {"url": "https://youtu.be/2g5Hz17C4is",
+                                                                  "title": "Gata Salvaje", "artist": "Hector y Tito"}).json()
+        self.assertEqual(ok["title"], "Shaggy - Boombastic (Official Music Video)")
+        self.assertTrue(ok["matches"])
+        self.assertFalse(bad["matches"])
+        self.assertEqual(oembed.call_count, 1)  # la segunda consulta usa la caché
+
+    def test_preview_rejects_other_sites_and_unavailable_links(self):
+        self.assertEqual(self.client.get(reverse("songs:link_preview"), {"url": "https://evil.com/x"}).status_code, 400)
+        with patch("apps.songs.thumbnails._oembed", side_effect=OSError("404")):
+            r = self.client.get(reverse("songs:link_preview"), {"url": "https://youtu.be/AAAAAAAAAAA"})
+        self.assertEqual(r.status_code, 404)
+
+    def test_same_link_cannot_be_reused_for_another_song(self):
+        data = {**guest_data(), "venue": self.venue.pk, "artist": "X", "genre": "pop", **STARS,
+                "reference_url": "https://youtu.be/2g5Hz17C4is?si=abc"}
+        self.assertEqual(self.client.post(self.url, {**data, "title": "Gata Salvaje"}).status_code, 302)
+        # Mismo video con otros parámetros (?si=…) para otra canción: se pide revisar
+        response = self.client.post(self.url, {**data, "title": "Rompe", "reference_url": "https://www.youtube.com/watch?v=2g5Hz17C4is"})
+        self.assertContains(response, "Ya usaste este mismo link para otra canción")
+        self.assertEqual(SongRequest.objects.count(), 1)
+
+    def test_link_field_has_autocomplete_off(self):
+        self.assertContains(self.client.get(self.url), 'autocomplete="off"')
+
+    def test_dj_sees_mismatch_warning(self):
+        from apps.dj.serializers import serialize_request
+        guest = Guest.objects.create(email="a@x.com", first_name="A", last_name="B", phone="300")
+        song = SongRequest.objects.create(guest=guest, venue=self.venue, title="Gata Salvaje", artist="Hector y Tito",
+                                          genre="reggaeton", reference_url="https://youtu.be/2g5Hz17C4is",
+                                          youtube_data={"video_id": "2g5Hz17C4is", "source": "link",
+                                                        "title": "Shaggy - Boombastic (Official Music Video)"})
+        self.assertTrue(serialize_request(song)["youtube"]["link_mismatch"])
+        song.title, song.artist = "Boombastic", "Shaggy"
+        self.assertFalse(serialize_request(song)["youtube"]["link_mismatch"])

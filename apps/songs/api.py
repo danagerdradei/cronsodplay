@@ -3,8 +3,11 @@ API pública (sin login) para la cola en vivo que ve el público y las puntuacio
 
 El público nunca recibe correo, celular, apellidos, IP ni dispositivo de nadie.
 """
+import hashlib
 import json
+from urllib.parse import urlparse
 
+from django.core.cache import cache
 from django.db.models import Avg, Count, OuterRef, Subquery
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -17,9 +20,13 @@ from apps.events.models import Event
 from apps.venues.models import Venue
 
 from .device import get_device_id, set_device_cookie
+from .forms import ALLOWED_LINK_HOSTS
 from .models import SongRating, SongRequest
+from .thumbnails import link_matches_song
+from .thumbnails import link_preview as link_preview_data
 
 MAX_PENDING = 50
+PREVIEW_CACHE_SECONDS = 600
 MAX_PLAYED = 5
 
 
@@ -136,3 +143,24 @@ def rate_song(request, pk):
     if new_device:
         set_device_cookie(response, device_id)
     return response
+
+
+@require_GET
+def link_preview(request):
+    """
+    GET /link-preview/?url=<link>&title=<canción>&artist=<artista>
+    Muestra qué video/track es el link pegado y si parece corresponder a la canción escrita.
+    """
+    url = request.GET.get("url", "").strip()[:500]
+    host = (urlparse(url).hostname or "").lower()
+    if not url.startswith("https://") or not any(host == h or host.endswith("." + h) for h in ALLOWED_LINK_HOSTS):
+        return JsonResponse({"error": "link_invalido"}, status=400)
+    key = "link-preview:" + hashlib.sha256(url.encode()).hexdigest()
+    data = cache.get(key)
+    if data is None:
+        data = link_preview_data(url) or {}
+        cache.set(key, data, PREVIEW_CACHE_SECONDS)
+    if not data:
+        return JsonResponse({"error": "no_disponible"}, status=404)
+    title, artist = request.GET.get("title", ""), request.GET.get("artist", "")
+    return JsonResponse({**data, "matches": link_matches_song(f"{data['title']} {data['author']}", title, artist)})

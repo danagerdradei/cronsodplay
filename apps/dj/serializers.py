@@ -1,9 +1,10 @@
 from django.utils import timezone
 
 from apps.songs.api import rating_summary
+from apps.songs.thumbnails import link_matches_song
 
 
-def serialize_youtube(data):
+def serialize_youtube(data, song=None):
     """Resumen de YouTube para el DJ: estadísticas + recomendación (sin textos de comentarios)."""
     if not data or not data.get("video_id"):
         return None
@@ -21,6 +22,9 @@ def serialize_youtube(data):
         "highlight": analysis.get("highlight"),
         "comments_analyzed": analysis.get("comments_analyzed", 0),
         "low_confidence": analysis.get("low_confidence", True),
+        # El link que pegó la persona es de otro video (título sin relación con la canción/artista).
+        "link_mismatch": bool(song and data.get("source") == "link"
+                              and not link_matches_song(data.get("title", ""), song.title, song.artist)),
     }
 
 
@@ -37,7 +41,7 @@ def serialize_request(song, position=None):
         "reference_url": song.reference_url,
         "platform": song.platform,
         "thumbnail_url": song.thumbnail_url,
-        "youtube": serialize_youtube(song.youtube_data),
+        "youtube": serialize_youtube(song.youtube_data, song),
         "rating": rating_summary(song),
         "requester": song.guest.display_name,
         "venue": {"slug": song.venue.slug, "name": song.venue.name},
