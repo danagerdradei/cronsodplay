@@ -11,20 +11,20 @@
   <div>
     <h2 class="person-name">{{ guest.display_name }}</h2>
     <p class="muted">{{ guest.full_name }}</p>
-    <p class="person-contact">✉️ {{ guest.email }} · 📱 {{ guest.phone|default:"sin celular" }}{% if guest.google_sub %} · <span class="chip">Cuenta de Google</span>{% endif %}</p>
+    <p class="person-contact">{% icon "mail" %} {{ guest.email }} · {% icon "phone" %} {{ guest.phone|default:"sin celular" }}{% if guest.google_sub %} · <span class="chip">Cuenta de Google</span>{% endif %}</p>
     <p class="muted">Registrado el {{ guest.created_at|date:"d M Y, h:i A" }}</p>
   </div>
 </section>
 
 <div class="dj-grid">
   <section class="card">
-    <h2 class="card-title">♻️ Cupo de canciones</h2>
+    <h2 class="card-title">{% icon "limits" %} Cupo de canciones</h2>
     {% if scopes %}
       <ul class="song-list">
         {% for s in scopes %}
           <li class="song-card">
             <div class="song-main">
-              <strong>{% if s.event %}🎉 {{ s.event.name }}{% else %}Pedidos sin evento{% endif %}</strong>
+              <strong>{% if s.event %}{% icon "party" %} {{ s.event.name }}{% else %}Pedidos sin evento{% endif %}</strong>
               <small class="muted">{% if s.event %}{{ s.event.venue.name }} · {% endif %}usó {{ s.used }} de {{ s.max }}</small>
             </div>
             {% if s.remaining %}<span class="badge">{{ s.remaining }} disponible{{ s.remaining|pluralize }}</span>{% else %}<span class="status status-rejected">En el límite</span>{% endif %}
@@ -58,7 +58,7 @@
   </section>
 
   <section class="card">
-    <h2 class="card-title">🎵 Canciones pedidas ({{ songs|length }})</h2>
+    <h2 class="card-title">{% icon "music" %} Canciones pedidas ({{ songs|length }})</h2>
     {% if songs %}
       <ul class="song-list">
         {% for song in songs %}
@@ -67,7 +67,7 @@
             <div class="song-main">
               <strong>{{ song.title }}</strong>
               <span>{{ song.artist }} · {{ song.get_genre_display }}</span>
-              <small class="muted">{% if song.event %}🎉 {{ song.event.name }} · {% endif %}{{ song.venue.name }} · {{ song.created_at|date:"d M, h:i A" }}{% if song.handled_by %} · atendió {{ song.handled_by.username }}{% endif %}{% if not song.counts_toward_limit %} · liberada{% endif %}</small>
+              <small class="muted">{% if song.event %}{% icon "party" %} {{ song.event.name }} · {% endif %}{{ song.venue.name }} · {{ song.created_at|date:"d M, h:i A" }}{% if song.handled_by %} · atendió {{ song.handled_by.username }}{% endif %}{% if not song.counts_toward_limit %} · liberada{% endif %}</small>
             </div>
             <span class="status status-{{ song.status }}">{{ song.get_status_display }}</span>
           </li>

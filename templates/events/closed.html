@@ -2,7 +2,7 @@
 {% block title %}Evento finalizado · {{ APP_NAME }}{% endblock %}
 {% block content %}
 <section class="card center">
-  <div class="big-emoji" aria-hidden="true">🌙</div>
+  <div class="notice-icon">{% icon "moon" %}</div>
   <h1>{{ event.name }} ya terminó</h1>
   <p class="lead">Este evento ya no está recibiendo pedidos. ¡Gracias por acompañarnos en {{ event.venue.name }}!</p>
   <p class="muted">Pídele al DJ el QR del evento de hoy para pedir tu canción.</p>

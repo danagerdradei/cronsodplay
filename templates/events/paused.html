@@ -5,13 +5,13 @@
 {% block content %}
 <div class="request-layout">
   <section class="card center error-card error-restricted">
-    <div class="error-icon" aria-hidden="true">⏸️</div>
-    <p class="eyebrow">🎉 {{ event.name }} · {{ event.venue.name }}</p>
+    <div class="notice-icon">{% icon "pause" %}</div>
+    <p class="eyebrow">{% icon "party" %} {{ event.name }} · {{ event.venue.name }}</p>
     <h1>El DJ pausó los pedidos</h1>
     <p class="lead">Por un momento no se están recibiendo canciones. Vuelve a intentarlo en unos minutos.</p>
     <p class="muted">Mientras tanto, mira cómo va la playlist y puntúa lo que pidió la gente.</p>
     <div class="hero-actions">
-      <a class="btn btn-primary" href="{{ event.get_absolute_url }}">🔄 Volver a intentar</a>
+      <a class="btn btn-primary" href="{{ event.get_absolute_url }}">{% icon "reset" %} Volver a intentar</a>
     </div>
   </section>
   {% include "partials/public_queue.html" with venue=event.venue event=event %}

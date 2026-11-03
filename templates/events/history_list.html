@@ -7,7 +7,7 @@
 
 <section class="card">
   <div class="card-head">
-    <h1 class="card-title">📜 Historial de eventos</h1>
+    <h1 class="card-title">{% icon "history" %} Historial de eventos</h1>
   </div>
   <p class="hint card-intro">Eventos finalizados con la playlist que pidió el público, tal como quedó al cerrar la noche.</p>
   {% if events %}
@@ -18,9 +18,9 @@
           <div class="ec-head">
             <div class="ec-title">
               <strong>{{ e.name }}</strong>
-              <span class="muted">📍 {{ e.venue.name }}{% if is_platform_admin and e.dj %} · 🎧 {{ e.dj.get_short_name|default:e.dj.username }}{% endif %}</span>
+              <span class="muted">{% icon "pin" %} {{ e.venue.name }}{% if is_platform_admin and e.dj %} · {% icon "headphones" %} {{ e.dj.get_short_name|default:e.dj.username }}{% endif %}</span>
             </div>
-            <span class="status status-finalized">🏁 Finalizado</span>
+            <span class="status status-finalized">{% icon "flag" %} Finalizado</span>
           </div>
           <p class="ec-meta muted">Código <code>{{ e.code }}</code> · finalizado el {{ e.finalized_at|date:"d M Y, h:i A" }}</p>
           <div class="ec-stats">
@@ -29,15 +29,15 @@
             <div><strong>{{ s.people|default:0 }}</strong><span>personas</span></div>
           </div>
           <div class="ec-actions">
-            <a class="btn btn-primary btn-sm" href="{% url 'events:dj_history_detail' e.code %}">📜 Ver playlist</a>
-            <a class="btn btn-ghost btn-sm" href="{% url 'events:dj_history_csv' e.code %}">⬇ CSV</a>
+            <a class="btn btn-primary btn-sm" href="{% url 'events:dj_history_detail' e.code %}">{% icon "history" %} Ver playlist</a>
+            <a class="btn btn-ghost btn-sm" href="{% url 'events:dj_history_csv' e.code %}">{% icon "download" %} CSV</a>
           </div>
         </li>
         {% endwith %}
       {% endfor %}
     </ul>
   {% else %}
-    <p class="muted">Aún no has finalizado eventos. Cuando termine la noche, toca <strong>🏁 Finalizar evento</strong> y su playlist quedará guardada aquí.</p>
+    <p class="muted">Aún no has finalizado eventos. Cuando termine la noche, toca <strong>{% icon "flag" %} Finalizar evento</strong> y su playlist quedará guardada aquí.</p>
   {% endif %}
 </section>
 {% endblock %}

@@ -1,7 +1,7 @@
 <nav class="dj-modules" aria-label="Módulos del DJ">
-  <a href="{% url 'dj:panel' %}" class="{% if dj_tab == 'queue' %}active{% endif %}">🎵 Cola</a>
-  <a href="{% if is_platform_admin %}{% url 'control:events' %}{% else %}{% url 'events:dj_list' %}{% endif %}" class="{% if dj_tab == 'events' %}active{% endif %}">🎉 {% if is_platform_admin %}Eventos{% else %}Mis eventos{% endif %}</a>
-  <a href="{% url 'dj:limits' %}" class="{% if dj_tab == 'limits' %}active{% endif %}">♻️ Límites</a>
-  <a href="{% url 'events:dj_history' %}" class="{% if dj_tab == 'history' %}active{% endif %}">📜 Historial</a>
-  {% if is_platform_admin %}<a href="{% url 'control:dashboard' %}" class="module-admin">🛡️ Control</a>{% endif %}
+  <a href="{% url 'dj:panel' %}" class="{% if dj_tab == 'queue' %}active{% endif %}">{% icon "music" %} Cola</a>
+  <a href="{% if is_platform_admin %}{% url 'control:events' %}{% else %}{% url 'events:dj_list' %}{% endif %}" class="{% if dj_tab == 'events' %}active{% endif %}">{% icon "party" %} {% if is_platform_admin %}Eventos{% else %}Mis eventos{% endif %}</a>
+  <a href="{% url 'dj:limits' %}" class="{% if dj_tab == 'limits' %}active{% endif %}">{% icon "limits" %} Límites</a>
+  <a href="{% url 'events:dj_history' %}" class="{% if dj_tab == 'history' %}active{% endif %}">{% icon "history" %} Historial</a>
+  {% if is_platform_admin %}<a href="{% url 'control:dashboard' %}" class="module-admin">{% icon "shield" %} Control</a>{% endif %}
 </nav>

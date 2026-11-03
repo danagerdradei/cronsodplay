@@ -8,7 +8,7 @@
 
 <div class="dj-grid">
   <section class="card">
-    <h2 class="card-title">@{{ target.username }} {% if role == "admin" %}<span class="chip chip-moment">🛡️ Admin</span>{% else %}<span class="chip">🎧 DJ</span>{% endif %}</h2>
+    <h2 class="card-title">@{{ target.username }} {% if role == "admin" %}<span class="chip chip-moment">{% icon "shield" %} Admin</span>{% else %}<span class="chip">{% icon "headphones" %} DJ</span>{% endif %}</h2>
     {% if is_self %}<p class="hint card-intro">Es tu cuenta: no puedes quitarte el rol de Admin ni desactivarte.</p>{% endif %}
     <form method="post" class="form" novalidate>
       {% csrf_token %}
@@ -22,7 +22,7 @@
   </section>
 
   <section class="card">
-    <h2 class="card-title">🔑 Nueva contraseña</h2>
+    <h2 class="card-title">{% icon "key" %} Nueva contraseña</h2>
     <p class="hint card-intro">Úsala si el DJ olvidó su contraseña. Mínimo 8 caracteres, que no sea común ni solo números.</p>
     <form method="post" action="{% url 'control:staff_password' target.pk %}" class="form" novalidate>
       {% csrf_token %}

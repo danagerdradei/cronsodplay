@@ -208,15 +208,15 @@ class AnalysisTests(SimpleTestCase):
         result = analyze(comments, views=1_000_000, likes=50_000, duration=240)
         self.assertEqual(result["moment"], "peak")
         self.assertEqual(result["highlight"], "2:10")
-        self.assertIn("🔥 Alta energía", result["tags"])
-        self.assertIn("❤️ Muy querida por el público", result["tags"])
+        self.assertIn("Alta energía", result["tags"])
+        self.assertIn("Muy querida por el público", result["tags"])
         self.assertTrue(result["low_confidence"])
 
     def test_nostalgic_song_goes_to_classics(self):
         comments = [("Un clásico de mi infancia, qué recuerdos", 900), ("Quién sigue escuchando esto", 400)] * 10
         result = analyze(comments, views=200_000_000, likes=1_000_000, duration=270)
         self.assertEqual(result["moment"], "classics")
-        self.assertIn("🌎 Éxito masivo", result["tags"])
+        self.assertIn("Éxito masivo", result["tags"])
         self.assertFalse(result["low_confidence"])
 
     def test_ignores_timestamps_beyond_duration_and_no_comments(self):

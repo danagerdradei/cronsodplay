@@ -2,7 +2,7 @@
 {% block title %}¿Dónde estás? · {{ APP_NAME }}{% endblock %}
 {% block content %}
 <section class="page-head">
-  <p class="eyebrow">{% if venue %}📍 {{ venue.name }}{% else %}Pide tu canción{% endif %}</p>
+  <p class="eyebrow">{% if venue %}{% icon "pin" %} {{ venue.name }}{% else %}Pide tu canción{% endif %}</p>
   <h1>¿Dónde estás esta noche?</h1>
   <p class="muted">Elige el evento en el que estás para pedirle tu canción al DJ.</p>
 </section>
@@ -11,7 +11,7 @@
   {% for group in groups %}
     <section class="card">
       <div class="card-head">
-        <h2 class="card-title">🏢 {{ group.venue.name }}</h2>
+        <h2 class="card-title">{% icon "building" %} {{ group.venue.name }}</h2>
         {% if group.venue.city %}<span class="muted">{{ group.venue.city }}</span>{% endif %}
       </div>
       <ul class="event-cards">
@@ -19,16 +19,16 @@
           <li class="event-card{% if e.is_paused %} is-closed{% endif %}">
             <div class="ec-head">
               <div class="ec-title">
-                <strong>🎉 {{ e.name }}</strong>
+                <strong>{% icon "party" %} {{ e.name }}</strong>
                 <span class="muted">{{ e.max_per_person }} {{ e.max_per_person|pluralize:"canción,canciones" }} por persona</span>
               </div>
-              <span class="status status-{{ e.status_key }}">{% if e.is_paused %}⏸️ {% endif %}{{ e.status_label }}</span>
+              <span class="status status-{{ e.status_key }}">{% if e.is_paused %}{% icon "pause" %} {% endif %}{{ e.status_label }}</span>
             </div>
             <div class="genre-tags left">
-              {% for g in e.genre_labels %}<span class="chip">{{ g }}</span>{% empty %}<span class="chip">🎧 Todos los géneros</span>{% endfor %}
+              {% for g in e.genre_labels %}<span class="chip">{{ g }}</span>{% empty %}<span class="chip">{% icon "headphones" %} Todos los géneros</span>{% endfor %}
             </div>
             <div class="ec-actions">
-              <a class="btn btn-primary btn-sm" href="{{ e.get_absolute_url }}">{% if e.is_paused %}👀 Ver la cola{% else %}🎵 Pedir aquí{% endif %}</a>
+              <a class="btn btn-primary btn-sm" href="{{ e.get_absolute_url }}">{% if e.is_paused %}{% icon "eye" %} Ver la cola{% else %}{% icon "music" %} Pedir aquí{% endif %}</a>
             </div>
           </li>
         {% endfor %}
@@ -37,7 +37,7 @@
   {% endfor %}
 {% else %}
   <section class="card center error-card">
-    <div class="error-icon" aria-hidden="true">🌙</div>
+    <div class="notice-icon">{% icon "moon" %}</div>
     <h2>Ahora no hay eventos abiertos{% if venue %} en {{ venue.name }}{% endif %}</h2>
     <p class="lead">Las canciones se piden desde el QR o el link del evento de esta noche.</p>
     <p class="muted">Pídele al DJ el QR del evento.</p>

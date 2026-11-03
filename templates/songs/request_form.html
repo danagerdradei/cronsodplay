@@ -6,7 +6,7 @@
 <div class="request-layout">
 <div class="request-main">
 <section class="page-head">
-  {% if event %}<p class="eyebrow">🎉 {{ event.name }} · {{ venue.name }}</p>{% elif venue %}<p class="eyebrow">📍 {{ venue.name }}</p>{% endif %}
+  {% if event %}<p class="eyebrow">{% icon "party" %} {{ event.name }} · {{ venue.name }}</p>{% elif venue %}<p class="eyebrow">{% icon "pin" %} {{ venue.name }}</p>{% endif %}
   <h1>Pide tu canción</h1>
   <div class="quota" aria-live="polite">
     {% for i in quota_slots %}
@@ -14,22 +14,22 @@
     {% endfor %}
     <span>Te quedan <strong>{{ remaining }}</strong> de {{ max_songs }}</span>
   </div>
-  <a class="jump-queue" href="#public-queue">👀 Ver la cola y puntuar canciones</a>
+  <a class="jump-queue" href="#public-queue">{% icon "eye" %} Ver la cola y puntuar canciones</a>
 </section>
 
 {% if event and event.genre_labels %}
   <div class="alert genre-banner">
-    🎧 <strong>Esta noche el DJ toca:</strong>
+    {% icon "headphones" %} <strong>Esta noche el DJ toca:</strong>
     {% for g in event.genre_labels %}<span class="chip">{{ g }}</span>{% endfor %}
     <small class="d-block muted">Pide canciones de estos géneros para que suenen.</small>
   </div>
 {% endif %}
 {% if staff_preview %}
   <div class="alert staff-preview-banner">
-    <strong>👀 Vista de público</strong> — así ven este formulario las personas que escanean el QR.
+    <strong>{% icon "eye" %} Vista de público</strong> — así ven este formulario las personas que escanean el QR.
     Como DJ/Admin no pides canciones aquí: gestiona la cola desde la playlist.
-    {% if event %}<a class="btn btn-primary btn-sm" href="{% url 'events:dj_playlist' event.code %}">🎵 Gestionar playlist</a>
-    {% else %}<a class="btn btn-primary btn-sm" href="{% url 'dj:panel' %}">🎵 Ir a la cola</a>{% endif %}
+    {% if event %}<a class="btn btn-primary btn-sm" href="{% url 'events:dj_playlist' event.code %}">{% icon "music" %} Gestionar playlist</a>
+    {% else %}<a class="btn btn-primary btn-sm" href="{% url 'dj:panel' %}">{% icon "music" %} Ir a la cola</a>{% endif %}
   </div>
 {% endif %}
 <form method="post" class="card form{% if staff_preview %} is-preview{% endif %}" novalidate>
@@ -88,12 +88,12 @@
 
   {% if experience %}
     <fieldset class="experience">
-      <legend><span class="step">⭐</span> Califica tu noche <span class="req" aria-hidden="true">*</span></legend>
+      <legend><span class="step">{% icon "star" %}</span> Califica tu noche <span class="req" aria-hidden="true">*</span></legend>
       <p class="hint">Es tu <strong>última canción</strong> de {% if experience.event %}este evento{% else %}esta noche{% endif %}. Cuéntanos cómo la estás pasando: es obligatorio para enviarla.</p>
       <div class="star-fields">
-        {% include "partials/star_input.html" with field=form.venue_stars icon="🏢" title=experience.venue.name subtitle="El local" %}
-        {% if experience.event %}{% include "partials/star_input.html" with field=form.event_stars icon="🎉" title=experience.event.name subtitle="El evento" %}{% endif %}
-        {% if experience.dj %}{% include "partials/star_input.html" with field=form.dj_stars icon="🎧" title=experience.dj_name subtitle="El DJ" %}{% endif %}
+        {% include "partials/star_input.html" with field=form.venue_stars icon="building" title=experience.venue.name subtitle="El local" %}
+        {% if experience.event %}{% include "partials/star_input.html" with field=form.event_stars icon="party" title=experience.event.name subtitle="El evento" %}{% endif %}
+        {% if experience.dj %}{% include "partials/star_input.html" with field=form.dj_stars icon="headphones" title=experience.dj_name subtitle="El DJ" %}{% endif %}
       </div>
     </fieldset>
   {% endif %}

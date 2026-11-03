@@ -14,7 +14,7 @@
     <label for="limits-scope">Evento</label>
     <select id="limits-scope" name="evento" onchange="this.form.submit()">
       {% for e in open_events %}
-        <option value="{{ e.code }}" {% if event and event.pk == e.pk %}selected{% endif %}>🎉 {{ e.name }} · {{ e.venue.name }}</option>
+        <option value="{{ e.code }}" {% if event and event.pk == e.pk %}selected{% endif %}>{{ e.name }} · {{ e.venue.name }}</option>
       {% endfor %}
       <option value="" {% if not event %}selected{% endif %}>Pedidos sin evento (QR de la discoteca)</option>
     </select>
@@ -56,7 +56,7 @@
                   {% csrf_token %}
                   <input type="hidden" name="evento" value="{{ event.code|default:'' }}">
                   <input type="hidden" name="q" value="{{ query }}">
-                  <button class="btn btn-primary btn-sm" type="submit">♻️ Restablecer</button>
+                  <button class="btn btn-primary btn-sm" type="submit">{% icon "limits" %} Restablecer</button>
                 </form>
               {% else %}
                 <span class="muted">—</span>
@@ -68,7 +68,7 @@
     </table>
     <p class="hint">Al restablecer, las canciones de la persona <strong>siguen en la cola</strong>; solo dejan de contar para su límite (también se libera el dispositivo que usó).</p>
   {% else %}
-    <p class="muted">{% if query %}No se encontró a nadie con «{{ query }}».{% else %}Nadie ha llegado al límite en este evento todavía. 🎶{% endif %}</p>
+    <p class="muted">{% if query %}No se encontró a nadie con «{{ query }}».{% else %}Nadie ha llegado al límite en este evento todavía.{% endif %}</p>
   {% endif %}
 </section>
 

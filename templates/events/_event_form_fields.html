@@ -6,7 +6,7 @@
         <div class="venue-picker" data-mode="{% if form.creating_venue %}new{% else %}existing{% endif %}">
           <div class="venue-existing">
             {% include "partials/field.html" with field=form.venue required=True %}
-            <button type="button" class="link-btn add-venue" data-venue-mode="new">➕ Nueva discoteca / bar</button>
+            <button type="button" class="link-btn add-venue" data-venue-mode="new">{% icon "plus" %} Nueva discoteca / bar</button>
           </div>
           <div class="venue-new">
             <div class="venue-new-head">

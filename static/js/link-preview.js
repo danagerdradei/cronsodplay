@@ -34,7 +34,7 @@
         img.hidden = true;
         name.textContent = "No pudimos abrir este link";
         author.textContent = "";
-        note.textContent = "⚠️ Revisa que sea un video o canción pública de YouTube o Spotify.";
+        CronsoPlatform.withIcon(note, "alert", "Revisa que sea un video o canción pública de YouTube o Spotify.");
         return;
       }
       const data = await res.json();
@@ -49,10 +49,10 @@
         note.textContent = "Este es el video que verá el DJ.";
       } else if (data.matches) {
         box.className = "link-preview ok";
-        note.textContent = "✓ Coincide con tu canción";
+        CronsoPlatform.withIcon(note, "check", "Coincide con tu canción");
       } else {
         box.className = "link-preview warn";
-        note.textContent = "⚠️ Este link parece ser de otra canción. Revisa que sea la que estás pidiendo.";
+        CronsoPlatform.withIcon(note, "alert", "Este link parece ser de otra canción. Revisa que sea la que estás pidiendo.");
       }
     } catch (_) {
       box.hidden = true;  // sin conexión: no molestar

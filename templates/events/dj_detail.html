@@ -16,13 +16,13 @@
       · {{ event.max_per_person }} canciones por persona · código <code>{{ event.code }}</code>
     </p>
     <div class="genre-tags">
-      {% for g in event.genre_labels %}<span class="chip">{{ g }}</span>{% empty %}<span class="chip">🎧 Todos los géneros</span>{% endfor %}
+      {% for g in event.genre_labels %}<span class="chip">{{ g }}</span>{% empty %}<span class="chip">{% icon "headphones" %} Todos los géneros</span>{% endfor %}
     </div>
     <img class="qr-img" src="{% url 'events:qr' event.code %}" alt="QR del evento {{ event.name }}" width="300" height="300">
     <div class="hero-actions">
-      <a class="btn btn-ghost btn-sm" href="{% url 'events:qr' event.code %}?formato=png&descargar=1">⬇ PNG</a>
-      <a class="btn btn-ghost btn-sm" href="{% url 'events:qr' event.code %}?descargar=1">⬇ SVG</a>
-      <a class="btn btn-ghost btn-sm" href="{% url 'events:dj_print' event.code %}" target="_blank">🖨️ Imprimir</a>
+      <a class="btn btn-ghost btn-sm" href="{% url 'events:qr' event.code %}?formato=png&descargar=1">{% icon "download" %} PNG</a>
+      <a class="btn btn-ghost btn-sm" href="{% url 'events:qr' event.code %}?descargar=1">{% icon "download" %} SVG</a>
+      <a class="btn btn-ghost btn-sm" href="{% url 'events:dj_print' event.code %}" target="_blank">{% icon "printer" %} Imprimir</a>
     </div>
   </section>
 
@@ -32,14 +32,14 @@
       <span>Link del evento</span>
       <div class="copy-row">
         <input type="text" readonly value="{{ event.public_url }}" id="event-url">
-        <button type="button" class="btn btn-primary" data-share="copy">📋 Copiar</button>
+        <button type="button" class="btn btn-primary" data-share="copy">{% icon "copy" %} Copiar</button>
       </div>
     </label>
     <div class="share-buttons">
       <a class="btn btn-whatsapp" target="_blank" rel="noopener"
          href="https://wa.me/?text={{ event.name|urlencode }}%20%C2%B7%20{{ event.venue.name|urlencode }}%20%E2%80%94%20%C2%A1Pide%20tu%20canci%C3%B3n%20al%20DJ!%20{{ event.public_url|urlencode }}">WhatsApp</a>
-      <button type="button" class="btn btn-ghost" data-share="native" hidden>📤 Compartir…</button>
-      <a class="btn btn-ghost" href="{{ event.get_absolute_url }}" target="_blank">👀 Ver como público</a>
+      <button type="button" class="btn btn-ghost" data-share="native" hidden>{% icon "share" %} Compartir…</button>
+      <a class="btn btn-ghost" href="{{ event.get_absolute_url }}" target="_blank">{% icon "eye" %} Ver como público</a>
     </div>
 
     <h3 class="pq-subtitle">Resumen</h3>
@@ -49,14 +49,14 @@
     </div>
 
     <div class="hero-actions left">
-      <a class="btn btn-primary" href="{% url 'events:dj_playlist' event.code %}">🎵 Playlist del evento</a>
-      <a class="btn btn-ghost" href="{% url 'dj:limits' %}?evento={{ event.code }}">♻️ Límites del evento</a>
+      <a class="btn btn-primary" href="{% url 'events:dj_playlist' event.code %}">{% icon "music" %} Playlist del evento</a>
+      <a class="btn btn-ghost" href="{% url 'dj:limits' %}?evento={{ event.code }}">{% icon "limits" %} Límites del evento</a>
       {% if event.is_finalized %}
-        <a class="btn btn-primary" href="{% url 'events:dj_history_detail' event.code %}">📜 Ver en el historial</a>
+        <a class="btn btn-primary" href="{% url 'events:dj_history_detail' event.code %}">{% icon "history" %} Ver en el historial</a>
       {% elif event.is_open %}
         <form method="post" action="{% url 'events:dj_pause' event.code %}" class="inline">
           {% csrf_token %}<input type="hidden" name="volver" value="{{ request.get_full_path }}">
-          <button class="btn btn-ghost" type="submit">{% if event.accepting_requests %}⏸️ Pausar pedidos{% else %}▶️ Reanudar pedidos{% endif %}</button>
+          <button class="btn btn-ghost" type="submit">{% if event.accepting_requests %}{% icon "pause" %} Pausar pedidos{% else %}{% icon "play" %} Reanudar pedidos{% endif %}</button>
         </form>
       {% else %}
         <form method="post" action="{% url 'events:dj_toggle' event.code %}">
@@ -66,8 +66,8 @@
     </div>
     {% if not event.is_finalized %}
     <div class="danger-zone">
-      <h3>🏁 Finalizar evento</h3>
-      <p class="hint">Cierra el evento <strong>para siempre</strong> (el link y el QR dejan de recibir pedidos) y guarda la playlist que pidió el público en tu <strong>📜 Historial</strong>. Escribe el código <code>{{ event.code }}</code> para confirmar.</p>
+      <h3>{% icon "flag" %} Finalizar evento</h3>
+      <p class="hint">Cierra el evento <strong>para siempre</strong> (el link y el QR dejan de recibir pedidos) y guarda la playlist que pidió el público en tu <strong>{% icon "history" %} Historial</strong>. Escribe el código <code>{{ event.code }}</code> para confirmar.</p>
       <form method="post" action="{% url 'events:dj_finalize' event.code %}" class="copy-row">
         {% csrf_token %}
         <input type="text" name="confirmar" placeholder="{{ event.code }}" autocomplete="off" autocapitalize="characters" aria-label="Código para confirmar">
@@ -88,8 +88,9 @@
       const input = document.getElementById("event-url");
       try { await navigator.clipboard.writeText(url); }
       catch (_) { input.select(); document.execCommand("copy"); }
-      copyBtn.textContent = "✓ Copiado";
-      setTimeout(() => (copyBtn.textContent = "📋 Copiar"), 1500);
+      const label = copyBtn.innerHTML;
+      copyBtn.innerHTML = '{% icon "check" %} Copiado';
+      setTimeout(() => (copyBtn.innerHTML = label), 1500);
     });
     const nativeBtn = box.querySelector('[data-share="native"]');
     if (navigator.share) {

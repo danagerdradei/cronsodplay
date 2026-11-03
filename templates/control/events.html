@@ -9,18 +9,18 @@
 <div class="stack">
   <section class="card">
     <details class="create-event" {% if form.errors or not rows %}open{% endif %}>
-      <summary><span class="card-title">➕ Crear evento</span></summary>
+      <summary><span class="card-title">{% icon "plus" %} Crear evento</span></summary>
       <form method="post" class="form" id="event-form" novalidate>
         {% csrf_token %}
         {% if form.non_field_errors %}<div class="alert alert-error">{{ form.non_field_errors|join:" " }}</div>{% endif %}
         {% include "events/_event_form_fields.html" %}
-        <button type="submit" class="btn btn-primary btn-block">🎉 Crear evento y generar QR</button>
+        <button type="submit" class="btn btn-primary btn-block">{% icon "party" %} Crear evento y generar QR</button>
       </form>
     </details>
   </section>
 
   <section class="card reset-card">
-    <h2 class="card-title">♻️ Reiniciar playlist de un evento</h2>
+    <h2 class="card-title">{% icon "reset" %} Reiniciar playlist de un evento</h2>
     <p class="hint card-intro">
       Borra <strong>todas las canciones</strong> del evento (en cola, sonaron y no disponibles) y sus votos.
       Cada persona vuelve a tener su cupo completo en ese evento. <strong>El evento, su link y su QR se conservan.</strong>
@@ -35,7 +35,7 @@
               <option value="">Elige el evento</option>
               {% for e in rows %}
                 <option value="{{ e.code }}" data-songs="{{ e.songs }}" {% if selected == e.code %}selected{% endif %}>
-                  {% if e.is_open %}🟢{% else %}⚪{% endif %} {{ e.name }} · {{ e.venue.name }} ({{ e.songs }} {{ e.songs|pluralize:"canción,canciones" }})
+                  {{ e.name }}{% if not e.is_open %} (cerrado){% endif %} · {{ e.venue.name }} ({{ e.songs }} {{ e.songs|pluralize:"canción,canciones" }})
                 </option>
               {% endfor %}
             </select>
@@ -45,7 +45,7 @@
             <input id="reset-confirm" type="text" name="confirmar" autocomplete="off" autocapitalize="characters" placeholder="Ej: GH5NCS">
           </div>
         </div>
-        <button class="btn btn-danger btn-block" type="submit" id="reset-btn">♻️ Reiniciar playlist</button>
+        <button class="btn btn-danger btn-block" type="submit" id="reset-btn">{% icon "reset" %} Reiniciar playlist</button>
         <p class="hint">No se puede deshacer.</p>
       </form>
     {% else %}
@@ -61,26 +61,26 @@
     {% if rows %}
       <div class="table-wrap">
       <table class="dj-table events-table">
-        <thead><tr><th>Evento</th><th>Discoteca</th><th class="num">Canciones</th><th class="num">En cola</th><th class="num">Personas</th><th>⭐ Evento</th><th>Estado</th></tr></thead>
+        <thead><tr><th>Evento</th><th>Discoteca</th><th class="num">Canciones</th><th class="num">En cola</th><th class="num">Personas</th><th>★ Evento</th><th>Estado</th></tr></thead>
         <tbody>
           {% for e in rows %}
             <tr>
               <td class="ev-name">
                 <strong>{{ e.name }}</strong>
                 <small class="muted d-block">código <code>{{ e.code }}</code> · {{ e.created_at|date:"d M Y" }} · {{ e.max_per_person }} por persona</small>
-                <small class="muted d-block">🎧 {% if e.genre_labels %}{{ e.genre_labels|join:" · " }}{% else %}Todos los géneros{% endif %}</small>
+                <small class="muted d-block">{% icon "headphones" %} {% if e.genre_labels %}{{ e.genre_labels|join:" · " }}{% else %}Todos los géneros{% endif %}</small>
                 <div class="row-actions">
-                  <a class="btn btn-primary btn-sm" href="{% url 'events:dj_playlist' e.code %}">🎵 Playlist</a>
-                  <a class="btn btn-ghost btn-sm" href="{% url 'control:event_edit' e.code %}">✏️ Editar</a>
+                  <a class="btn btn-primary btn-sm" href="{% url 'events:dj_playlist' e.code %}">{% icon "music" %} Playlist</a>
+                  <a class="btn btn-ghost btn-sm" href="{% url 'control:event_edit' e.code %}">{% icon "pencil" %} Editar</a>
                   <a class="btn btn-ghost btn-sm" href="{% url 'events:dj_detail' e.code %}">Link y QR</a>
                   {% if e.is_finalized %}
-                    <a class="btn btn-ghost btn-sm" href="{% url 'events:dj_history_detail' e.code %}">📜 Historial</a>
+                    <a class="btn btn-ghost btn-sm" href="{% url 'events:dj_history_detail' e.code %}">{% icon "history" %} Historial</a>
                   {% else %}
                   <form method="post" action="{% url 'control:event_toggle' e.code %}" class="inline">
                     {% csrf_token %}<button class="btn btn-ghost btn-sm" type="submit">{% if e.is_open %}Cerrar{% else %}Abrir{% endif %}</button>
                   </form>
                   {% endif %}
-                  {% if e.songs %}<a class="btn btn-ghost btn-sm" href="?evento={{ e.code }}#reset-form">♻️ Reiniciar</a>{% endif %}
+                  {% if e.songs %}<a class="btn btn-ghost btn-sm" href="?evento={{ e.code }}#reset-form">{% icon "reset" %} Reiniciar</a>{% endif %}
                 </div>
               </td>
               <td>{{ e.venue.name }}</td>

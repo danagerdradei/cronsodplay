@@ -13,14 +13,14 @@
       {% csrf_token %}
       {% if form.non_field_errors %}<div class="alert alert-error">{{ form.non_field_errors|join:" " }}</div>{% endif %}
       {% include "events/_event_form_fields.html" %}
-      <button type="submit" class="btn btn-primary btn-block">🎉 Crear evento y generar QR</button>
+      <button type="submit" class="btn btn-primary btn-block">{% icon "party" %} Crear evento y generar QR</button>
     </form>
   </section>
 
   <section class="card">
     <div class="card-head">
       <h2 class="card-title">Mis eventos</h2>
-      {% if my_rating.n %}<span class="rating-badge" title="Calificación del público como DJ">🎧 Tu calificación ★ {{ my_rating.avg|floatformat:1 }} <small>({{ my_rating.n }})</small></span>{% endif %}
+      {% if my_rating.n %}<span class="rating-badge" title="Calificación del público como DJ">{% icon "headphones" %} Tu calificación ★ {{ my_rating.avg|floatformat:1 }} <small>({{ my_rating.n }})</small></span>{% endif %}
     </div>
     <p class="hint card-intro">Aquí ves los eventos que tú creaste: comparte su link o QR y ciérralos al terminar la noche.</p>
     {% if events %}
@@ -30,7 +30,7 @@
             <div class="ec-head">
               <div class="ec-title">
                 <strong>{{ e.name }}</strong>
-                <span class="muted">📍 {{ e.venue.name }}</span>
+                <span class="muted">{% icon "pin" %} {{ e.venue.name }}</span>
               </div>
               <span class="status status-{{ e.status_key }}">{{ e.status_label }}</span>
             </div>
@@ -38,7 +38,7 @@
               Código <code>{{ e.code }}</code> · {{ e.created_at|date:"d M Y, h:i A" }} · {{ e.max_per_person }} canciones por persona
             </p>
             <div class="genre-tags left">
-              {% for g in e.genre_labels %}<span class="chip">{{ g }}</span>{% empty %}<span class="chip">🎧 Todos los géneros</span>{% endfor %}
+              {% for g in e.genre_labels %}<span class="chip">{{ g }}</span>{% empty %}<span class="chip">{% icon "headphones" %} Todos los géneros</span>{% endfor %}
             </div>
             <div class="ec-stats">
               <div><strong>{{ e.total }}</strong><span>pedidos</span></div>
@@ -46,11 +46,11 @@
               <div><strong>{% if e.rating_n %}★ {{ e.rating|floatformat:1 }}{% else %}—{% endif %}</strong><span>{% if e.rating_n %}{{ e.rating_n }} calificación{{ e.rating_n|pluralize:"es" }}{% else %}sin calificar{% endif %}</span></div>
             </div>
             <div class="ec-actions">
-              <a class="btn btn-primary btn-sm" href="{% url 'events:dj_playlist' e.code %}">🎵 Playlist</a>
-              <a class="btn btn-ghost btn-sm" href="{% url 'events:dj_detail' e.code %}">🔗 Link y QR</a>
+              <a class="btn btn-primary btn-sm" href="{% url 'events:dj_playlist' e.code %}">{% icon "music" %} Playlist</a>
+              <a class="btn btn-ghost btn-sm" href="{% url 'events:dj_detail' e.code %}">{% icon "link" %} Link y QR</a>
               {% if e.is_open %}<form method="post" action="{% url 'events:dj_pause' e.code %}" class="inline">
           {% csrf_token %}<input type="hidden" name="volver" value="{{ request.get_full_path }}">
-          <button class="btn btn-ghost btn-sm" type="submit">{% if e.accepting_requests %}⏸️ Pausar pedidos{% else %}▶️ Reanudar pedidos{% endif %}</button>
+          <button class="btn btn-ghost btn-sm" type="submit">{% if e.accepting_requests %}{% icon "pause" %} Pausar pedidos{% else %}{% icon "play" %} Reanudar pedidos{% endif %}</button>
         </form>{% endif %}
             </div>
           </li>

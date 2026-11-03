@@ -16,27 +16,27 @@
   <p class="back-link"><a href="{% if is_platform_admin %}{% url 'control:events' %}{% else %}{% url 'events:dj_list' %}{% endif %}">← {% if is_platform_admin %}Administrar eventos{% else %}Mis eventos{% endif %}</a></p>
   <section class="card playlist-head">
     <div class="playlist-title">
-      <p class="eyebrow">🎵 Playlist del evento · {{ fixed_event.venue.name }}</p>
+      <p class="eyebrow">{% icon "music" %} Playlist del evento · {{ fixed_event.venue.name }}</p>
       <h1>{{ fixed_event.name }} <span class="live-dot" title="En vivo"></span></h1>
       <div class="genre-tags left">
         <span class="status status-{{ fixed_event.status_key }}">{{ fixed_event.status_label }}</span>
         <span class="chip">código <code>{{ fixed_event.code }}</code></span>
         <span class="chip">{{ fixed_event.max_per_person }} por persona</span>
-        {% for g in fixed_event.genre_labels %}<span class="chip">{{ g }}</span>{% empty %}<span class="chip">🎧 Todos los géneros</span>{% endfor %}
+        {% for g in fixed_event.genre_labels %}<span class="chip">{{ g }}</span>{% empty %}<span class="chip">{% icon "headphones" %} Todos los géneros</span>{% endfor %}
       </div>
     </div>
     <div class="playlist-side">
-      {% if rating.event_n %}<span class="rating-badge">🎉 Evento ★ {{ rating.event_avg|floatformat:1 }} <small>({{ rating.event_n }})</small></span>{% endif %}
-      {% if rating.dj_n %}<span class="rating-badge">🎧 DJ ★ {{ rating.dj_avg|floatformat:1 }} <small>({{ rating.dj_n }})</small></span>{% endif %}
+      {% if rating.event_n %}<span class="rating-badge">{% icon "party" %} Evento ★ {{ rating.event_avg|floatformat:1 }} <small>({{ rating.event_n }})</small></span>{% endif %}
+      {% if rating.dj_n %}<span class="rating-badge">{% icon "headphones" %} DJ ★ {{ rating.dj_avg|floatformat:1 }} <small>({{ rating.dj_n }})</small></span>{% endif %}
       <div class="row-actions">
-        <a class="btn btn-ghost btn-sm" href="{% url 'events:dj_detail' fixed_event.code %}">🔗 Link y QR</a>
+        <a class="btn btn-ghost btn-sm" href="{% url 'events:dj_detail' fixed_event.code %}">{% icon "link" %} Link y QR</a>
         {% if fixed_event.is_open and not fixed_event.is_finalized %}<form method="post" action="{% url 'events:dj_pause' fixed_event.code %}" class="inline">
           {% csrf_token %}<input type="hidden" name="volver" value="{{ request.get_full_path }}">
-          <button class="btn btn-ghost btn-sm" type="submit">{% if fixed_event.accepting_requests %}⏸️ Pausar pedidos{% else %}▶️ Reanudar pedidos{% endif %}</button>
+          <button class="btn btn-ghost btn-sm" type="submit">{% if fixed_event.accepting_requests %}{% icon "pause" %} Pausar pedidos{% else %}{% icon "play" %} Reanudar pedidos{% endif %}</button>
         </form>{% endif %}
         {% if is_platform_admin %}
-          <a class="btn btn-ghost btn-sm" href="{% url 'control:event_edit' fixed_event.code %}">✏️ Editar</a>
-          <a class="btn btn-ghost btn-sm" href="{% url 'control:events' %}?evento={{ fixed_event.code }}#reset-form">♻️ Reiniciar</a>
+          <a class="btn btn-ghost btn-sm" href="{% url 'control:event_edit' fixed_event.code %}">{% icon "pencil" %} Editar</a>
+          <a class="btn btn-ghost btn-sm" href="{% url 'control:events' %}?evento={{ fixed_event.code }}#reset-form">{% icon "reset" %} Reiniciar</a>
         {% endif %}
       </div>
     </div>
@@ -47,7 +47,7 @@
     <div class="dj-filters">
       <select id="event-filter" aria-label="Filtrar por evento">
         <option value="">Todos los eventos</option>
-        {% for e in events %}<option value="{{ e.code }}">🎉 {{ e.name }} · {{ e.venue.name }}</option>{% endfor %}
+        {% for e in events %}<option value="{{ e.code }}">{{ e.name }} · {{ e.venue.name }}</option>{% endfor %}
       </select>
       <select id="venue-filter" aria-label="Filtrar por discoteca">
         <option value="">Todas las discotecas</option>
@@ -64,14 +64,14 @@
   </nav>
 
   <ol id="queue" class="queue" aria-live="polite"></ol>
-  <p id="empty" class="muted center" hidden>No hay canciones aquí todavía. 🎶</p>
+  <p id="empty" class="muted center" hidden>No hay canciones aquí todavía.</p>
   <p id="error" class="alert alert-error" hidden>Sin conexión. Reintentando…</p>
 </div>
 
 <template id="row-tpl">
   <li class="queue-item">
     <span class="pos"></span>
-    <span class="q-thumb song-thumb song-thumb-empty" aria-hidden="true">♪</span>
+    <span class="q-thumb song-thumb song-thumb-empty" aria-hidden="true">{% icon "music" %}</span>
     <div class="q-main">
       <strong class="q-title"></strong>
       <span class="q-artist"></span>
@@ -84,14 +84,14 @@
     </div>
     <div class="q-links">
       <a class="q-link" target="_blank" rel="noopener" hidden></a>
-      <button type="button" class="q-copy" data-copy="link" title="Copiar la URL de la canción" hidden>📋 Link</button>
-      <button type="button" class="q-copy" data-copy="search" title="Copiar artista y canción para buscar en tu software de DJ">📋 Búsqueda</button>
+      <button type="button" class="q-copy" data-copy="link" title="Copiar la URL de la canción" hidden>{% icon "copy" %} Link</button>
+      <button type="button" class="q-copy" data-copy="search" title="Copiar artista y canción para buscar en tu software de DJ">{% icon "copy" %} Búsqueda</button>
     </div>
     <div class="q-actions">
-      <button class="btn-icon ok" data-action="played" title="Marcar como sonada">✓</button>
-      <button class="btn-icon no" data-action="rejected" title="No disponible">✕</button>
-      <button class="btn-icon back" data-action="pending" title="Devolver a la cola">↺</button>
-      <button class="btn-icon del" data-delete title="Eliminar de la playlist">🗑</button>
+      <button class="btn-icon ok" data-action="played" title="Marcar como sonada">{% icon "check" %}</button>
+      <button class="btn-icon no" data-action="rejected" title="No disponible">{% icon "x" %}</button>
+      <button class="btn-icon back" data-action="pending" title="Devolver a la cola">{% icon "reset" %}</button>
+      <button class="btn-icon del" data-delete title="Eliminar de la playlist">{% icon "trash" %}</button>
     </div>
   </li>
 </template>

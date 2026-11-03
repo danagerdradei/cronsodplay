@@ -135,7 +135,7 @@ def _request_song(request, venue, device_id, event=None):
                 request.session[SESSION_EMAIL_KEY] = email
                 return _limit_page(request, email, exc.reason, device_id, venue, event)
             except DuplicateSong:
-                form.add_error("title", "Ya pediste esta canción con este correo. ¡Prueba con otra! 🎧")
+                form.add_error("title", "Ya pediste esta canción con este correo. ¡Prueba con otra!")
             except IdentityMismatch as exc:
                 # No se revela cuáles eran los datos registrados (evita averiguar datos de un correo ajeno).
                 for field in exc.fields:
@@ -146,7 +146,7 @@ def _request_song(request, venue, device_id, event=None):
                 ask_experience = True
                 for field in exc.fields:
                     form.add_error(field, "Elige de 1 a 5 estrellas.")
-                form.add_error(None, "Es tu última canción de la noche: califica tu experiencia para enviarla. ⭐")
+                form.add_error(None, "Es tu última canción de la noche: califica tu experiencia para enviarla.")
             except LinkAlreadyUsed:
                 form.add_error("reference_url", "Ya usaste este mismo link para otra canción. "
                                                 "Pega el link de la canción que estás pidiendo.")

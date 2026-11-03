@@ -315,7 +315,7 @@ class EventPlaylistPageTests(TestCase):
         self.assertContains(response, "NaviRapas")
         self.assertContains(response, f'data-fixed-event="{self.event.code}"')
         self.assertNotContains(response, 'id="event-filter"')  # sin selectores: el evento es fijo
-        self.assertNotContains(response, "♻️ Reiniciar")       # herramientas del Admin ocultas
+        self.assertNotContains(response, "#reset-form\">")       # herramientas del Admin ocultas
 
     def test_other_dj_cannot_open_it(self):
         self.client.login(username="otro", password="pass12345")
@@ -325,7 +325,7 @@ class EventPlaylistPageTests(TestCase):
         self.client.login(username="admin", password="pass12345")
         response = self.client.get(self.url)
         self.assertContains(response, "NaviRapas")
-        self.assertContains(response, "♻️ Reiniciar")
+        self.assertContains(response, "#reset-form\">")
         self.assertContains(response, reverse("control:event_edit", args=[self.event.code]))
 
     def test_requires_login(self):
@@ -527,7 +527,7 @@ class RequestsRequireEventTests(TestCase):
         self.assertContains(response, "¿Dónde estás esta noche?")
         for name in ("Houseofhiphoplandia", "Viernes", "Sábado", "La Casa del Hip Hop", "ClorofilaTaller"):
             self.assertContains(response, name)
-        self.assertNotContains(response, ">🎉 Cerrado<")
+        self.assertNotContains(response, "Cerrado</strong>")
         self.assertContains(response, self.hiphop.get_absolute_url())
         self.assertNotContains(response, 'name="title"')  # no hay formulario suelto
 

@@ -14,11 +14,30 @@ window.CronsoPlatform = (() => {
       'stroke="#1DB954" stroke-width="1.7" fill="none" stroke-linecap="round"/></svg>',
   };
   const NAMES = { youtube: "YouTube", spotify: "Spotify" };
+  const SVG_NS = "http://www.w3.org/2000/svg";
+
+  // Ícono de línea del sprite (static/img/icons.svg); la URL la pone base.html en <body data-icons>.
+  function icon(name, cls = "") {
+    const svg = document.createElementNS(SVG_NS, "svg");
+    svg.setAttribute("class", `icon ${cls}`.trim());
+    svg.setAttribute("aria-hidden", "true");
+    const use = document.createElementNS(SVG_NS, "use");
+    use.setAttribute("href", `${document.body.dataset.icons}#i-${name}`);
+    svg.appendChild(use);
+    return svg;
+  }
+
+  // Reemplaza el contenido de `el` por ícono + texto (el texto va como textContent, seguro).
+  function withIcon(el, name, text) {
+    el.replaceChildren(icon(name), document.createTextNode(` ${text}`));
+    return el;
+  }
 
   function decorate(a, platform, note = "") {
     a.classList.add("platform-btn");
     if (ICONS[platform]) a.classList.add(`platform-${platform}`);
-    a.innerHTML = ICONS[platform] || "🔗"; // íconos fijos de este archivo, no datos del usuario
+    if (ICONS[platform]) a.innerHTML = ICONS[platform]; // íconos fijos de este archivo, no datos del usuario
+    else a.replaceChildren(icon("link"));
     const label = document.createElement("span");
     label.textContent = NAMES[platform] || "Abrir link";
     a.appendChild(label);
@@ -31,5 +50,5 @@ window.CronsoPlatform = (() => {
     return a;
   }
 
-  return { decorate };
+  return { decorate, icon, withIcon };
 })();

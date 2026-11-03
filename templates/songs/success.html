@@ -5,7 +5,7 @@
 {% block content %}
 <div class="request-layout">
 <section class="card center celebrate">
-  <div class="big-emoji" aria-hidden="true">🎉</div>
+  <div class="notice-icon">{% icon "party" %}</div>
   <h1>¡Listo, {{ song.guest.display_name }}!</h1>
   <p class="lead">Tu canción ya está en la lista del DJ.</p>
 
@@ -27,7 +27,7 @@
       <a class="btn btn-ghost" href="{% url 'songs:my_requests' %}">Mis canciones</a>
     </div>
   {% else %}
-    <p>Ya usaste tus {{ max_songs }} pedidos. ¡Ahora a disfrutar la pista! 💃🕺</p>
+    <p>Ya usaste tus {{ max_songs }} pedidos. ¡Ahora a disfrutar la pista!</p>
     <a class="btn btn-ghost" href="{% url 'songs:my_requests' %}">Ver mis canciones</a>
   {% endif %}
 </section>

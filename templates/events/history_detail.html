@@ -8,20 +8,20 @@
 
 <section class="card playlist-head">
   <div class="playlist-title">
-    <p class="eyebrow">📜 Playlist guardada · {{ event.venue.name }}</p>
+    <p class="eyebrow">{% icon "history" %} Playlist guardada · {{ event.venue.name }}</p>
     <h1>{{ event.name }}</h1>
     <div class="genre-tags left">
-      <span class="status status-finalized">🏁 Finalizado</span>
+      <span class="status status-finalized">{% icon "flag" %} Finalizado</span>
       <span class="chip">código <code>{{ event.code }}</code></span>
       <span class="chip">{{ event.finalized_at|date:"d M Y, h:i A" }}</span>
       {% for g in event.genre_labels %}<span class="chip">{{ g }}</span>{% endfor %}
     </div>
   </div>
   <div class="playlist-side">
-    {% if summary.ratings.event %}<span class="rating-badge">🎉 Evento ★ {{ summary.ratings.event|floatformat:1 }}</span>{% endif %}
-    {% if summary.ratings.dj %}<span class="rating-badge">🎧 DJ ★ {{ summary.ratings.dj|floatformat:1 }}</span>{% endif %}
-    {% if summary.ratings.venue %}<span class="rating-badge">🏢 Local ★ {{ summary.ratings.venue|floatformat:1 }}</span>{% endif %}
-    <a class="btn btn-primary btn-sm" href="{% url 'events:dj_history_csv' event.code %}">⬇ Descargar CSV</a>
+    {% if summary.ratings.event %}<span class="rating-badge">{% icon "party" %} Evento ★ {{ summary.ratings.event|floatformat:1 }}</span>{% endif %}
+    {% if summary.ratings.dj %}<span class="rating-badge">{% icon "headphones" %} DJ ★ {{ summary.ratings.dj|floatformat:1 }}</span>{% endif %}
+    {% if summary.ratings.venue %}<span class="rating-badge">{% icon "building" %} Local ★ {{ summary.ratings.venue|floatformat:1 }}</span>{% endif %}
+    <a class="btn btn-primary btn-sm" href="{% url 'events:dj_history_csv' event.code %}">{% icon "download" %} Descargar CSV</a>
   </div>
 </section>
 
@@ -39,15 +39,15 @@
       {% for s in songs %}
         <li class="queue-item">
           <span class="pos">{{ s.position }}</span>
-          {% if s.thumbnail %}<img class="q-thumb song-thumb" src="{{ s.thumbnail }}" alt="" referrerpolicy="no-referrer" loading="lazy">{% else %}<span class="q-thumb song-thumb song-thumb-empty" aria-hidden="true">♪</span>{% endif %}
+          {% if s.thumbnail %}<img class="q-thumb song-thumb" src="{{ s.thumbnail }}" alt="" referrerpolicy="no-referrer" loading="lazy">{% else %}<span class="q-thumb song-thumb song-thumb-empty" aria-hidden="true">{% icon "music" %}</span>{% endif %}
           <div class="q-main">
             <strong class="q-title">{{ s.title }}</strong>
             <span class="q-artist">{{ s.artist }}</span>
-            <small class="q-meta">{{ s.genre }} · pedida por {{ s.requester }} · {{ s.requested_at|slice:"11:16" }}{% if s.rating_n %} · ⭐ {{ s.rating_avg }} ({{ s.rating_n }}){% endif %}</small>
-            <a class="q-email" href="mailto:{{ s.requester_email }}">✉️ {{ s.requester_email }}</a>
-            {% if s.video_title %}<small class="q-video-title">🎬 {{ s.video_title }}</small>{% endif %}
+            <small class="q-meta">{{ s.genre }} · pedida por {{ s.requester }} · {{ s.requested_at|slice:"11:16" }}{% if s.rating_n %} · ★ {{ s.rating_avg }} ({{ s.rating_n }}){% endif %}</small>
+            <a class="q-email" href="mailto:{{ s.requester_email }}">{% icon "mail" %} {{ s.requester_email }}</a>
+            {% if s.video_title %}<small class="q-video-title">{% icon "video" %} {{ s.video_title }}</small>{% endif %}
           </div>
-          <div class="q-links">{% if s.link %}<a class="btn btn-ghost btn-sm" href="{{ s.link }}" target="_blank" rel="noopener">🔗 Link</a>{% endif %}</div>
+          <div class="q-links">{% if s.link %}<a class="btn btn-ghost btn-sm" href="{{ s.link }}" target="_blank" rel="noopener">{% icon "link" %} Link</a>{% endif %}</div>
           <div class="q-actions"><span class="status status-{{ s.status }}">{{ s.status_label }}</span></div>
         </li>
       {% endfor %}

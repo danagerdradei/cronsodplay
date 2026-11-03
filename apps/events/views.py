@@ -141,8 +141,8 @@ def dj_pause(request, code):
     else:
         event.accepting_requests = not event.accepting_requests
         event.save(update_fields=["accepting_requests"])
-        messages.success(request, "▶️ Pedidos reanudados." if event.accepting_requests
-                         else "⏸️ Pedidos pausados: el público ve un aviso y la cola sigue visible.")
+        messages.success(request, "Pedidos reanudados." if event.accepting_requests
+                         else "Pedidos pausados: el público ve un aviso y la cola sigue visible.")
     back = request.POST.get("volver", "")
     if back and url_has_allowed_host_and_scheme(back, allowed_hosts={request.get_host()}):
         return redirect(back)
@@ -159,7 +159,7 @@ def dj_finalize(request, code):
         return redirect("events:dj_detail", code=event.code)
     finalize_event(event, request.user)
     total = event.playlist_snapshot.get("summary", {}).get("total", 0)
-    messages.success(request, f"🏁 Evento «{event.name}» finalizado. Su playlist ({total} canciones) quedó en el historial.")
+    messages.success(request, f"Evento «{event.name}» finalizado. Su playlist ({total} canciones) quedó en el historial.")
     return redirect("events:dj_history_detail", code=event.code)
 
 

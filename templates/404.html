@@ -3,13 +3,13 @@
 {% block content %}
 <section class="card center error-card{% if restricted %} error-restricted{% endif %}">
   {% if restricted %}
-    <div class="error-icon" aria-hidden="true">🔒</div>
+    <div class="notice-icon">{% icon "lock" %}</div>
     <p class="eyebrow">Acceso restringido</p>
     <h1>No puedes ingresar a esta sección</h1>
     <p class="lead">El administrador avanzado <strong>no está disponible en la versión pública</strong> de {{ APP_NAME }}.</p>
     <p class="muted">Si eres Admin, gestiona usuarios, personas, eventos y discotecas desde el <strong>Panel de control</strong>.</p>
     <div class="hero-actions">
-      <a class="btn btn-primary" href="{% url 'control:dashboard' %}">🛡️ Ir al Panel de control</a>
+      <a class="btn btn-primary" href="{% url 'control:dashboard' %}">{% icon "shield" %} Ir al Panel de control</a>
       <a class="btn btn-ghost" href="{% url 'core:home' %}">Volver al inicio</a>
     </div>
   {% else %}
@@ -18,7 +18,7 @@
     <p class="lead">Puede que el link esté incompleto o que la página se haya movido.</p>
     <p class="muted">Si escaneaste un QR, pídele al DJ el código del evento de esta noche.</p>
     <div class="hero-actions">
-      <a class="btn btn-primary" href="{% url 'songs:request' %}">🎵 Pedir una canción</a>
+      <a class="btn btn-primary" href="{% url 'songs:request' %}">{% icon "music" %} Pedir una canción</a>
       <a class="btn btn-ghost" href="{% url 'core:home' %}">Volver al inicio</a>
     </div>
   {% endif %}

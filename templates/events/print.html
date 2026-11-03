@@ -10,6 +10,6 @@
   <p class="lead">Escanea y pídele tu canción al DJ</p>
   <img class="qr-img" src="{% url 'events:qr' event.code %}" alt="Código QR del evento" width="320" height="320">
   <p class="muted qr-url">{{ event.public_url }}</p>
-  <button class="btn btn-primary no-print" onclick="window.print()">🖨️ Imprimir</button>
+  <button class="btn btn-primary no-print" onclick="window.print()">{% icon "printer" %} Imprimir</button>
 </section>
 {% endblock %}

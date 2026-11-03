@@ -10,7 +10,7 @@
   <div>
     <h1>{{ guest.display_name }}</h1>
     <p class="muted">{{ guest.full_name }} · {{ guest.email }}</p>
-    <p class="muted small-stats">🎵 {{ total }} {{ total|pluralize:"canción,canciones" }} pedida{{ total|pluralize }} · 🎉 {{ played }} sonaron</p>
+    <p class="muted small-stats">{% icon "music" %} {{ total }} {{ total|pluralize:"canción,canciones" }} pedida{{ total|pluralize }} · {% icon "party" %} {{ played }} sonaron</p>
   </div>
 </section>
 
@@ -38,7 +38,7 @@
         {% for item in open_events %}
           <li class="song-card">
             <div class="song-main">
-              <strong>🎉 {{ item.event.name }}</strong>
+              <strong>{% icon "party" %} {{ item.event.name }}</strong>
               <span class="muted">{{ item.event.venue.name }}</span>
             </div>
             <span class="badge">{{ item.remaining }} de {{ item.max }} disponibles</span>
@@ -59,14 +59,14 @@
             <div class="song-main">
               <strong>{{ song.title }}</strong>
               <span>{{ song.artist }} · {{ song.get_genre_display }}</span>
-              <small class="muted">{% if song.event %}🎉 {{ song.event.name }} · {% endif %}{{ song.venue.name }} · {{ song.created_at|date:"d M, h:i A" }}</small>
+              <small class="muted">{% if song.event %}{% icon "party" %} {{ song.event.name }} · {% endif %}{{ song.venue.name }} · {{ song.created_at|date:"d M, h:i A" }}</small>
             </div>
             <span class="status status-{{ song.status }}">{{ song.get_status_display }}</span>
           </li>
         {% endfor %}
       </ul>
     {% else %}
-      <p class="muted">Aún no has pedido canciones. ¡Anímate! 🎶</p>
+      <p class="muted">Aún no has pedido canciones. ¡Anímate!</p>
     {% endif %}
   </section>
 </div>

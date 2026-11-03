@@ -28,13 +28,13 @@
         <div class="stat"><strong>{{ stats.people }}</strong><span>personas</span></div>
       </div>
       <div class="hero-actions left">
-        <a class="btn btn-primary" href="{% url 'events:dj_playlist' event.code %}">🎵 Playlist</a>
-        <a class="btn btn-ghost" href="{% url 'events:dj_detail' event.code %}">🔗 Link y QR</a>
+        <a class="btn btn-primary" href="{% url 'events:dj_playlist' event.code %}">{% icon "music" %} Playlist</a>
+        <a class="btn btn-ghost" href="{% url 'events:dj_detail' event.code %}">{% icon "link" %} Link y QR</a>
         <form method="post" action="{% url 'control:event_toggle' event.code %}">
           {% csrf_token %}<input type="hidden" name="volver" value="{{ request.path }}">
-          <button class="btn btn-ghost" type="submit">{% if event.is_open %}🔒 Cerrar evento{% else %}🔓 Abrir evento{% endif %}</button>
+          <button class="btn btn-ghost" type="submit">{% if event.is_open %}{% icon "lock" %} Cerrar evento{% else %}{% icon "unlock" %} Abrir evento{% endif %}</button>
         </form>
-        {% if stats.total %}<a class="btn btn-ghost" href="{% url 'control:events' %}?evento={{ event.code }}#reset-form">♻️ Reiniciar playlist</a>{% endif %}
+        {% if stats.total %}<a class="btn btn-ghost" href="{% url 'control:events' %}?evento={{ event.code }}#reset-form">{% icon "reset" %} Reiniciar playlist</a>{% endif %}
       </div>
     </section>
 

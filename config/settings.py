@@ -77,6 +77,8 @@ TEMPLATES = [
                 "apps.core.context_processors.app_info",
                 "apps.accounts.context_processors.guest",
             ],
+            # {% icon "nombre" %} disponible en todas las plantillas sin {% load %}
+            "builtins": ["apps.core.templatetags.icons"],
         },
     },
 ]

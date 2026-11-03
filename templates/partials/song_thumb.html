@@ -1,5 +1,5 @@
 {% if song.thumbnail_url %}
   <img class="song-thumb" src="{{ song.thumbnail_url }}" alt="" width="56" height="56" loading="lazy" referrerpolicy="no-referrer">
 {% else %}
-  <span class="song-thumb song-thumb-empty" aria-hidden="true">♪</span>
+  <span class="song-thumb song-thumb-empty" aria-hidden="true">{% icon "music" %}</span>
 {% endif %}

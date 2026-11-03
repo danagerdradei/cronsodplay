@@ -46,7 +46,7 @@
     tr.querySelector(".pq-avg").textContent = avgText(song.rating);
     if (allVenues) {
       const v = tr.querySelector(".pq-venue");
-      v.textContent = `📍 ${song.venue}`;
+      CronsoPlatform.withIcon(v, "pin", song.venue);
       v.hidden = false;
     }
     if (song.thumbnail_url) {

@@ -12,26 +12,26 @@
   <div class="kpi"><span>Personas</span><strong>{{ kpis.guests }}</strong><small>{{ kpis.guests_today }} nuevas hoy · {{ kpis.google }} con Google</small></div>
   <div class="kpi"><span>DJs</span><strong>{{ kpis.djs }}</strong><small>{{ kpis.admins }} admin{{ kpis.admins|pluralize:"s" }}</small></div>
   <div class="kpi"><span>Eventos abiertos</span><strong>{{ kpis.events_open }}</strong><small>{{ kpis.venues }} discoteca{{ kpis.venues|pluralize }} activa{{ kpis.venues|pluralize }}</small></div>
-  <div class="kpi"><span>Votos ⭐</span><strong>{{ kpis.votes }}</strong><small>puntuaciones a canciones</small></div>
+  <div class="kpi"><span>Votos ★</span><strong>{{ kpis.votes }}</strong><small>puntuaciones a canciones</small></div>
   <div class="kpi"><span>Calificaciones</span><strong>{{ kpis.ratings }}</strong><small>de la noche (local, evento, DJ)</small></div>
 </section>
 
 <section class="card">
-  <h2 class="card-title">⭐ Calificaciones de la noche</h2>
+  <h2 class="card-title">{% icon "star" %} Calificaciones de la noche</h2>
   <p class="hint card-intro">El público califica al pedir su última canción del cupo (obligatorio, una vez por evento).</p>
   <div class="ratings-grid">
     <div>
-      <h3 class="pq-subtitle">🏢 Locales</h3>
+      <h3 class="pq-subtitle">{% icon "building" %} Locales</h3>
       {% for v in ratings.venues %}<p class="rating-row"><span>{{ v.name }}</span><span class="rating-badge">★ {{ v.avg|floatformat:1 }} <small>({{ v.n }})</small></span></p>
       {% empty %}<p class="muted">Sin calificaciones.</p>{% endfor %}
     </div>
     <div>
-      <h3 class="pq-subtitle">🎉 Eventos</h3>
+      <h3 class="pq-subtitle">{% icon "party" %} Eventos</h3>
       {% for e in ratings.events %}<p class="rating-row"><span>{{ e.name }} <small class="muted">· {{ e.venue.name }}</small></span><span class="rating-badge">★ {{ e.avg|floatformat:1 }} <small>({{ e.n }})</small></span></p>
       {% empty %}<p class="muted">Sin calificaciones.</p>{% endfor %}
     </div>
     <div>
-      <h3 class="pq-subtitle">🎧 DJs</h3>
+      <h3 class="pq-subtitle">{% icon "headphones" %} DJs</h3>
       {% for u in ratings.djs %}<p class="rating-row"><span>{{ u.get_short_name|default:u.username }}</span><span class="rating-badge">★ {{ u.avg|floatformat:1 }} <small>({{ u.n }})</small></span></p>
       {% empty %}<p class="muted">Sin calificaciones.</p>{% endfor %}
     </div>
@@ -40,7 +40,7 @@
 
 <div class="dj-grid control-grid">
   <section class="card">
-    <h2 class="card-title">🔥 Canciones más pedidas</h2>
+    <h2 class="card-title">{% icon "flame" %} Canciones más pedidas</h2>
     {% if top_songs %}
       <ul class="bar-list">
         {% for s in top_songs %}
@@ -53,7 +53,7 @@
       </ul>
     {% else %}<p class="muted">Aún no hay pedidos.</p>{% endif %}
 
-    <h2 class="card-title section-gap">🎶 Géneros</h2>
+    <h2 class="card-title section-gap">{% icon "disc" %} Géneros</h2>
     {% if top_genres %}
       <ul class="bar-list">
         {% for g in top_genres %}
@@ -65,7 +65,7 @@
 
   <section class="card">
     <div class="card-head">
-      <h2 class="card-title">🕒 Últimos pedidos</h2>
+      <h2 class="card-title">{% icon "clock" %} Últimos pedidos</h2>
       <a class="btn btn-ghost btn-sm" href="{% url 'dj:panel' %}">Ver cola</a>
     </div>
     {% if recent %}
@@ -84,7 +84,7 @@
       </table>
     {% else %}<p class="muted">Aún no hay pedidos.</p>{% endif %}
 
-    <h2 class="card-title section-gap">🏆 Quién pide más</h2>
+    <h2 class="card-title section-gap">{% icon "trophy" %} Quién pide más</h2>
     {% if top_people %}
       <ul class="song-list">
         {% for p in top_people %}

@@ -20,7 +20,7 @@
     </select>
   </div>
   <button class="btn btn-primary" type="submit">Buscar</button>
-  <a class="btn btn-ghost" href="{% url 'control:people_export' %}?q={{ query|urlencode }}&orden={{ orden }}">⬇ CSV</a>
+  <a class="btn btn-ghost" href="{% url 'control:people_export' %}?q={{ query|urlencode }}&orden={{ orden }}">{% icon "download" %} CSV</a>
 </form>
 
 <section class="card">

@@ -91,23 +91,23 @@ def analyze(comments, views=None, likes=None, duration=None):
 
     tags = []
     if energy >= 0.10:
-        tags.append("🔥 Alta energía")
+        tags.append("Alta energía")
     if nostalgia >= 0.10:
-        tags.append("📼 Clásico / nostalgia")
+        tags.append("Clásico / nostalgia")
     if sing >= 0.05:
-        tags.append("🎤 Para cantar en coro")
+        tags.append("Para cantar en coro")
     if chill >= 0.08:
-        tags.append("🌙 Ambiente tranquilo")
+        tags.append("Ambiente tranquilo")
     if views and likes:
         ratio = likes / views
         if ratio >= 0.04:
-            tags.append("❤️ Muy querida por el público")
+            tags.append("Muy querida por el público")
         elif ratio >= 0.02:
-            tags.append("👍 Buena aceptación")
+            tags.append("Buena aceptación")
     if views and views >= 100_000_000:
-        tags.append("🌎 Éxito masivo")
+        tags.append("Éxito masivo")
     if comments and negative > positive and negative >= 0.05:
-        tags.append("⚖️ Opiniones divididas")
+        tags.append("Opiniones divididas")
 
     return {
         "moment": moment,

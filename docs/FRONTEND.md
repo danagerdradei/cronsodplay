@@ -40,6 +40,17 @@ El fondo tiene brillos dorados y plateados suaves (`.bg-glow`) que se apagan si 
 
 Si cambia el logo, se regeneran a partir del original: se recorta al contenido, se quita solo el negro exterior (el negro interno del búho se conserva) y se exporta en WebP.
 
+### Íconos
+
+La interfaz no usa emojis: usa íconos de línea de [Lucide](https://lucide.dev) (licencia ISC), en un solo sprite local `static/img/icons.svg` (~14 KB, solo los íconos que usa la app, sin peticiones a terceros). Toman el color del texto (`currentColor`), así que se ven dorados o plateados según dónde estén.
+
+- **Plantillas:** `{% icon "music" %}`, disponible en todas sin `{% load %}` (builtin en `settings.TEMPLATES`, definido en `apps/core/templatetags/icons.py`). Son decorativos (`aria-hidden`); con `label="…"` se anuncian a lectores de pantalla.
+- **JavaScript:** `CronsoPlatform.icon("mail")` crea el `<svg>`; `CronsoPlatform.withIcon(el, "mail", texto)` pone ícono + texto (el texto va como `textContent`).
+- **Páginas de aviso:** `<div class="notice-icon">{% icon "moon" %}</div>` dibuja el ícono grande dentro de un círculo dorado.
+- **Agregar un ícono:** se descarga su SVG de `https://unpkg.com/lucide-static@1.66.0/icons/<nombre>.svg` y se agrega como `<symbol id="i-<nombre>">` al sprite.
+
+Las estrellas ★ de las calificaciones siguen siendo texto (se pintan con CSS).
+
 ## 3. Responsive (mobile-first)
 
 - Diseño base para 360–430 px; a partir de **640 px** el formulario pasa a 2 columnas; a partir de **760 px** las filas del panel DJ se ponen en una línea.

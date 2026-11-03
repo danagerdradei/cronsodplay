@@ -10,6 +10,6 @@
   <p class="lead">Escanea y pídesela al DJ</p>
   <img class="qr-img" src="{% url 'venues:qr_svg' venue.slug %}" alt="Código QR para {{ venue.name }}" width="320" height="320">
   <p class="muted qr-url">{{ venue.public_url }}</p>
-  <button class="btn btn-primary no-print" onclick="window.print()">🖨️ Imprimir</button>
+  <button class="btn btn-primary no-print" onclick="window.print()">{% icon "printer" %} Imprimir</button>
 </section>
 {% endblock %}

@@ -60,15 +60,15 @@
       if (it.requester_email) {
         const mail = li.querySelector(".q-email");
         mail.href = `mailto:${it.requester_email}`;
-        mail.textContent = `✉️ ${it.requester_email}`;
+        CronsoPlatform.withIcon(mail, "mail", it.requester_email);
         mail.title = `Escribir a ${it.requester}`;
         mail.hidden = false;
       }
       li.querySelector(".q-meta").textContent =
         `${it.genre_label} · pedida por ${it.requester} · ${it.created_at_display}` +
         (state.venue ? "" : ` · ${it.venue.name}`) +
-        (it.event && !state.event ? ` · 🎉 ${it.event}` : "") +
-        (it.rating?.count ? ` · ⭐ ${it.rating.avg.toFixed(1)} (${it.rating.count})` : "");
+        (it.event && !state.event ? ` · ${it.event}` : "") +
+        (it.rating?.count ? ` · ★ ${it.rating.avg.toFixed(1)} (${it.rating.count})` : "");
       if (it.thumbnail_url) {
         const img = document.createElement("img");
         img.className = "q-thumb song-thumb";
@@ -105,33 +105,44 @@
   const compact = new Intl.NumberFormat("es-CO", { notation: "compact", maximumFractionDigits: 1 });
   const duration = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
-  function chip(text, cls = "") {
+  // Ícono de cada etiqueta de la recomendación (las guardadas antes traían un emoji delante: se quita).
+  const TAG_ICONS = {
+    "Alta energía": "flame", "Clásico / nostalgia": "history", "Para cantar en coro": "mic",
+    "Ambiente tranquilo": "moon", "Muy querida por el público": "heart", "Buena aceptación": "thumbs-up",
+    "Éxito masivo": "globe", "Opiniones divididas": "scale",
+  };
+
+  function chip(text, cls = "", iconName = "") {
     const span = document.createElement("span");
     span.className = `chip ${cls}`.trim();
-    span.textContent = text;
+    if (iconName) CronsoPlatform.withIcon(span, iconName, text);
+    else span.textContent = text;
     return span;
   }
 
   // Vistas, likes, duración y recomendación calculada de los comentarios de YouTube.
   function renderYouTube(li, yt) {
     const stats = [];
-    if (yt.views != null) stats.push(`▶ ${compact.format(yt.views)} vistas`);
-    if (yt.likes != null) stats.push(`👍 ${compact.format(yt.likes)}`);
-    if (yt.duration) stats.push(`⏱ ${duration(yt.duration)}`);
+    if (yt.views != null) stats.push(`${compact.format(yt.views)} vistas`);
+    if (yt.likes != null) stats.push(`${compact.format(yt.likes)} likes`);
+    if (yt.duration) stats.push(duration(yt.duration));
     li.querySelector(".q-stats").textContent = stats.join("  ·  ");
 
     if (yt.title) {
       const vt = document.createElement("small");
       vt.className = "q-video-title";
-      vt.textContent = `🎬 ${yt.title}`;
+      CronsoPlatform.withIcon(vt, "video", yt.title);
       li.querySelector(".q-stats").after(vt);
     }
 
     const reco = li.querySelector(".q-reco");
-    if (yt.link_mismatch) reco.appendChild(chip("⚠️ El link no coincide con la canción", "chip-warn"));
+    if (yt.link_mismatch) reco.appendChild(chip("El link no coincide con la canción", "chip-warn", "alert"));
     if (yt.moment_label) reco.appendChild(chip(yt.moment_label, `chip-moment chip-${yt.moment}`));
-    if (yt.highlight) reco.appendChild(chip(`🎯 Destacado ${yt.highlight}`));
-    for (const tag of yt.tags || []) reco.appendChild(chip(tag));
+    if (yt.highlight) reco.appendChild(chip(`Destacado ${yt.highlight}`, "", "target"));
+    for (const raw of yt.tags || []) {
+      const tag = raw.replace(/^[^\p{L}\p{N}]+/u, "");
+      reco.appendChild(chip(tag, "", TAG_ICONS[tag] || ""));
+    }
     if (yt.low_confidence) reco.appendChild(chip("pocos comentarios", "chip-muted"));
     reco.title = `Basado en ${yt.comments_analyzed} comentarios de YouTube` +
       (yt.found_by_search ? ` · video encontrado por búsqueda: ${yt.title}` : "");
@@ -230,10 +241,11 @@
     if (copyBtn) {
       const li = copyBtn.closest(".queue-item");
       const ok = await copyText(li.dataset[copyBtn.dataset.copy] || "");
-      const label = copyBtn.textContent;
-      copyBtn.textContent = ok ? "✓ Copiado" : "No se pudo copiar";
+      copyBtn.dataset.label ??= copyBtn.innerHTML; // contenido fijo de la plantilla (ícono + texto)
+      if (ok) CronsoPlatform.withIcon(copyBtn, "check", "Copiado");
+      else copyBtn.textContent = "No se pudo copiar";
       copyBtn.classList.toggle("copied", ok);
-      setTimeout(() => { copyBtn.textContent = label; copyBtn.classList.remove("copied"); }, 1500);
+      setTimeout(() => { copyBtn.innerHTML = copyBtn.dataset.label; copyBtn.classList.remove("copied"); }, 1500);
       return;
     }
     const delBtn = e.target.closest("[data-delete]");

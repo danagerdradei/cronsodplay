@@ -86,7 +86,7 @@ class SongRequest(models.Model):
 
     class Status(models.TextChoices):
         PENDING = "pending", "En cola"
-        PLAYED = "played", "Sonó 🎉"
+        PLAYED = "played", "Sonó"
         REJECTED = "rejected", "No disponible"
 
     guest = models.ForeignKey(Guest, on_delete=models.CASCADE, related_name="requests", verbose_name="asistente")

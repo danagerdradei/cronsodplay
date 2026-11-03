@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   {% block head %}{% endblock %}
 </head>
-<body class="{% block body_class %}{% endblock %}">
+<body class="{% block body_class %}{% endblock %}" data-icons="{% static 'img/icons.svg' %}">
   <div class="bg-glow" aria-hidden="true"></div>
 
   <header class="topbar">
@@ -34,11 +34,11 @@
           <a class="btn btn-primary btn-sm" href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">Entrar</a>
         {% endif %}
         {% if user.is_authenticated and is_platform_admin %}
-          <a class="btn btn-ghost btn-sm staff-btn" href="{% url 'control:dashboard' %}" title="Panel de control">🛡️<span class="staff-btn-label"> Control</span></a>
+          <a class="btn btn-ghost btn-sm staff-btn" href="{% url 'control:dashboard' %}" title="Panel de control">{% icon "shield" %}<span class="staff-btn-label"> Control</span></a>
         {% elif user.is_authenticated %}
-          <a class="btn btn-ghost btn-sm staff-btn" href="{% url 'dj:panel' %}" title="Mi panel de DJ">🎧<span class="staff-btn-label"> Mi panel</span></a>
+          <a class="btn btn-ghost btn-sm staff-btn" href="{% url 'dj:panel' %}" title="Mi panel de DJ">{% icon "headphones" %}<span class="staff-btn-label"> Mi panel</span></a>
         {% else %}
-          <button type="button" class="btn btn-ghost btn-sm staff-btn" data-open-staff-login aria-haspopup="dialog" title="Acceso DJ">🎧<span class="staff-btn-label"> Acceso DJ</span></button>
+          <button type="button" class="btn btn-ghost btn-sm staff-btn" data-open-staff-login aria-haspopup="dialog" title="Acceso DJ">{% icon "headphones" %}<span class="staff-btn-label"> Acceso DJ</span></button>
         {% endif %}
       {% endblock %}
     </nav>
@@ -55,7 +55,7 @@
           <p class="eyebrow">Panel de control</p>
           <h2 id="staff-dialog-title">Acceso DJ · Admin</h2>
         </div>
-        <button type="button" class="dialog-close" data-close-staff-login aria-label="Cerrar">✕</button>
+        <button type="button" class="dialog-close" data-close-staff-login aria-label="Cerrar">{% icon "x" %}</button>
       </div>
       <p class="alert alert-error staff-dialog-error" id="staff-dialog-error" role="alert" hidden></p>
       <label class="staff-field" for="modal-username">
@@ -128,7 +128,7 @@
   </main>
 
   <footer class="footer">
-    <small>{{ APP_NAME }} · Hecho para la pista 🎧</small>
+    <small>{{ APP_NAME }} · Hecho para la pista</small>
   </footer>
   {% block scripts %}{% endblock %}
 </body>
