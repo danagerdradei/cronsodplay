@@ -24,28 +24,34 @@
     </div>
     <p class="hint card-intro">Aquí ves los eventos que tú creaste: comparte su link o QR y ciérralos al terminar la noche.</p>
     {% if events %}
-      <table class="dj-table">
-        <thead>
-          <tr><th>Evento</th><th>Discoteca</th><th class="num">Pedidos</th><th class="num">Personas</th><th>⭐</th><th>Estado</th><th></th></tr>
-        </thead>
-        <tbody>
-          {% for e in events %}
-            <tr>
-              <td>
+      <ul class="event-cards">
+        {% for e in events %}
+          <li class="event-card{% if not e.is_open %} is-closed{% endif %}">
+            <div class="ec-head">
+              <div class="ec-title">
                 <strong>{{ e.name }}</strong>
-                <small class="muted d-block">{{ e.created_at|date:"d M Y, h:i A" }} · código <code>{{ e.code }}</code></small>
-                <small class="muted d-block">🎧 {% if e.genre_labels %}{{ e.genre_labels|join:" · " }}{% else %}Todos los géneros{% endif %}</small>
-              </td>
-              <td>{{ e.venue.name }}</td>
-              <td class="num">{{ e.total }}</td>
-              <td class="num">{{ e.people }}</td>
-              <td>{% if e.rating_n %}<span class="rating-badge">★ {{ e.rating|floatformat:1 }} <small>({{ e.rating_n }})</small></span>{% else %}<span class="muted">—</span>{% endif %}</td>
-              <td>{% if e.is_open %}<span class="status status-played">Abierto</span>{% else %}<span class="status status-rejected">Cerrado</span>{% endif %}</td>
-              <td class="actions"><a class="btn btn-primary btn-sm" href="{% url 'events:dj_playlist' e.code %}">🎵 Playlist</a> <a class="btn btn-ghost btn-sm" href="{% url 'events:dj_detail' e.code %}">Link y QR</a></td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+                <span class="muted">📍 {{ e.venue.name }}</span>
+              </div>
+              {% if e.is_open %}<span class="status status-played">Abierto</span>{% else %}<span class="status status-rejected">Cerrado</span>{% endif %}
+            </div>
+            <p class="ec-meta muted">
+              Código <code>{{ e.code }}</code> · {{ e.created_at|date:"d M Y, h:i A" }} · {{ e.max_per_person }} canciones por persona
+            </p>
+            <div class="genre-tags left">
+              {% for g in e.genre_labels %}<span class="chip">{{ g }}</span>{% empty %}<span class="chip">🎧 Todos los géneros</span>{% endfor %}
+            </div>
+            <div class="ec-stats">
+              <div><strong>{{ e.total }}</strong><span>pedidos</span></div>
+              <div><strong>{{ e.people }}</strong><span>personas</span></div>
+              <div><strong>{% if e.rating_n %}★ {{ e.rating|floatformat:1 }}{% else %}—{% endif %}</strong><span>{% if e.rating_n %}{{ e.rating_n }} calificación{{ e.rating_n|pluralize:"es" }}{% else %}sin calificar{% endif %}</span></div>
+            </div>
+            <div class="ec-actions">
+              <a class="btn btn-primary btn-sm" href="{% url 'events:dj_playlist' e.code %}">🎵 Playlist</a>
+              <a class="btn btn-ghost btn-sm" href="{% url 'events:dj_detail' e.code %}">🔗 Link y QR</a>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
     {% else %}
       <p class="muted">Todavía no has creado eventos. Crea el de esta noche para compartir su QR.</p>
     {% endif %}

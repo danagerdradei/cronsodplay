@@ -24,8 +24,17 @@
     <small class="d-block muted">Pide canciones de estos géneros para que suenen.</small>
   </div>
 {% endif %}
-<form method="post" class="card form" novalidate>
+{% if staff_preview %}
+  <div class="alert staff-preview-banner">
+    <strong>👀 Vista de público</strong> — así ven este formulario las personas que escanean el QR.
+    Como DJ/Admin no pides canciones aquí: gestiona la cola desde la playlist.
+    {% if event %}<a class="btn btn-primary btn-sm" href="{% url 'events:dj_playlist' event.code %}">🎵 Gestionar playlist</a>
+    {% else %}<a class="btn btn-primary btn-sm" href="{% url 'dj:panel' %}">🎵 Ir a la cola</a>{% endif %}
+  </div>
+{% endif %}
+<form method="post" class="card form{% if staff_preview %} is-preview{% endif %}" novalidate>
   {% csrf_token %}
+  {% if staff_preview %}<fieldset disabled class="preview-lock">{% endif %}
   {% if form.non_field_errors %}<div class="alert alert-error">{{ form.non_field_errors|join:" " }}</div>{% endif %}
 
   <fieldset>
@@ -90,6 +99,7 @@
   {% endif %}
 
   <button type="submit" class="btn btn-primary btn-lg btn-block" data-loading-text="Enviando…">{% if experience %}Calificar y enviar al DJ{% else %}Enviar al DJ{% endif %}</button>
+  {% if staff_preview %}</fieldset>{% endif %}
   <p class="legal">Tu correo queda asociado a tus nombres y alias: úsalos igual cada vez que pidas. Lo usamos solo para contar tus pedidos y mostrarte tus canciones.</p>
 </form>
 {% if known_guest or form.guest %}

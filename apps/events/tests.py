@@ -338,3 +338,71 @@ class EventPlaylistPageTests(TestCase):
         self.client.login(username="admin", password="pass12345")
         self.assertContains(self.client.get(reverse("control:events")), self.url)
         self.assertContains(self.client.get(reverse("control:event_edit", args=[self.event.code])), self.url)
+
+
+
+@override_settings(GOOGLE_CLIENT_ID="test.apps.googleusercontent.com", GOOGLE_LOGIN_REQUIRED=True, YOUTUBE_API_KEY="")
+class StaffPreviewAndDeleteTests(TestCase):
+    """El DJ/Admin ve el link del evento sin Google (solo lectura) y puede eliminar canciones de su cola."""
+
+    def setUp(self):
+        from apps.songs.models import Guest, SongRequest
+        call_command("setup_roles", verbosity=0)
+        self.venue = Venue.objects.create(name="ClorofilaTaller")
+        self.dj = User.objects.create_user("djcronso", password="pass12345")
+        self.other = User.objects.create_user("otro", password="pass12345")
+        for u in (self.dj, self.other):
+            u.groups.add(Group.objects.get(name=DJ_GROUP))
+        User.objects.create_superuser("admin", "a@x.com", "pass12345")
+        self.event = Event.objects.create(name="Halloweens2", venue=self.venue, dj=self.dj, max_per_person=3)
+        guest = Guest.objects.create(email="g@gmail.com", first_name="Gera", last_name="V", phone="300")
+        self.song = SongRequest.objects.create(guest=guest, venue=self.venue, event=self.event, title="Rompe",
+                                               artist="Daddy Yankee", genre="reggaeton")
+        self.guest = guest
+
+    def test_public_visitor_still_needs_google(self):
+        self.assertEqual(self.client.get(self.event.get_absolute_url()).status_code, 302)
+
+    def test_dj_sees_public_view_without_google(self):
+        self.client.login(username="djcronso", password="pass12345")
+        response = self.client.get(self.event.get_absolute_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Vista de público")
+        self.assertContains(response, "fieldset disabled")
+        self.assertContains(response, reverse("events:dj_playlist", args=[self.event.code]))
+
+    def test_dj_cannot_submit_songs_from_preview(self):
+        from apps.songs.models import SongRequest
+        self.client.login(username="djcronso", password="pass12345")
+        response = self.client.post(self.event.get_absolute_url(), {"title": "X", "artist": "Y", "genre": "pop",
+                                                                    "venue": self.venue.pk, "phone": "300"})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(SongRequest.objects.count(), 1)
+
+    def test_owner_dj_deletes_song_and_quota_is_freed(self):
+        from apps.songs.models import SongRequest
+        from apps.songs.services import remaining_for_email
+        self.client.login(username="djcronso", password="pass12345")
+        self.assertEqual(remaining_for_email("g@gmail.com", self.event), 2)
+        response = self.client.post(reverse("dj:api_delete_request", args=[self.song.pk]))
+        self.assertEqual(response.json(), {"deleted": self.song.pk})
+        self.assertFalse(SongRequest.objects.exists())
+        self.assertEqual(remaining_for_email("g@gmail.com", self.event), 3)
+
+    def test_other_dj_cannot_delete_but_admin_can(self):
+        from apps.songs.models import SongRequest
+        self.client.login(username="otro", password="pass12345")
+        self.assertEqual(self.client.post(reverse("dj:api_delete_request", args=[self.song.pk])).status_code, 403)
+        self.assertTrue(SongRequest.objects.exists())
+        self.client.login(username="admin", password="pass12345")
+        self.assertEqual(self.client.post(reverse("dj:api_delete_request", args=[self.song.pk])).status_code, 200)
+        self.assertFalse(SongRequest.objects.exists())
+
+    def test_delete_requires_staff_and_post(self):
+        self.assertEqual(self.client.post(reverse("dj:api_delete_request", args=[self.song.pk])).status_code, 401)
+        self.client.login(username="djcronso", password="pass12345")
+        self.assertEqual(self.client.get(reverse("dj:api_delete_request", args=[self.song.pk])).status_code, 405)
+
+    def test_playlist_has_delete_button(self):
+        self.client.login(username="djcronso", password="pass12345")
+        self.assertContains(self.client.get(reverse("events:dj_playlist", args=[self.event.code])), "data-delete")

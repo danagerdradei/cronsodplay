@@ -7,6 +7,7 @@
 <div id="dj-panel"
      data-api="{% url 'dj:api_requests' %}"
      data-status-url="{% url 'dj:api_update_status' 0 %}"
+     data-delete-url="{% url 'dj:api_delete_request' 0 %}"
      data-poll="{{ poll_seconds }}"
      data-fixed-event="{{ fixed_event.code|default:'' }}">
 
@@ -85,6 +86,7 @@
       <button class="btn-icon ok" data-action="played" title="Marcar como sonada">✓</button>
       <button class="btn-icon no" data-action="rejected" title="No disponible">✕</button>
       <button class="btn-icon back" data-action="pending" title="Devolver a la cola">↺</button>
+      <button class="btn-icon del" data-delete title="Eliminar de la playlist">🗑</button>
     </div>
   </li>
 </template>

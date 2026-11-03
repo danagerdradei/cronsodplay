@@ -700,3 +700,28 @@ input, select, textarea, button { max-width: 100%; }
 .link-preview .lp-note { font-size: .78rem; }
 .link-preview.ok .lp-note { color: var(--ok); }
 .link-preview.warn .lp-note { color: #ff8a96; }
+
+/* --- "Mis eventos" del DJ: tarjetas en vez de tabla ---------------------- */
+.event-cards { list-style: none; margin: 0; padding: 0; display: grid; gap: .8rem; }
+.event-card { padding: 1rem 1.1rem; border-radius: var(--radius-sm); background: var(--bg-2);
+  border: 1px solid var(--border); display: grid; gap: .65rem; min-width: 0; }
+.event-card:hover { border-color: rgba(201, 162, 28, .45); }
+.event-card.is-closed { opacity: .75; }
+.ec-head { display: flex; justify-content: space-between; align-items: flex-start; gap: .75rem; }
+.ec-title { display: flex; flex-direction: column; min-width: 0; }
+.ec-title strong { font-size: 1.15rem; overflow-wrap: anywhere; }
+.ec-meta { margin: 0; font-size: .85rem; }
+.ec-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; }
+.ec-stats > div { padding: .55rem .6rem; border-radius: var(--radius-sm); background: var(--surface); border: 1px solid var(--border); }
+.ec-stats strong { display: block; font-size: 1.25rem; color: var(--primary); }
+.ec-stats span { font-size: .75rem; color: var(--muted); }
+.ec-actions { display: flex; flex-wrap: wrap; gap: .45rem; }
+
+/* Vista previa del público para DJ/Admin */
+.staff-preview-banner { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .8rem;
+  background: rgba(201, 162, 28, .08); border-color: rgba(201, 162, 28, .45); }
+.staff-preview-banner .btn { margin-left: auto; }
+.preview-lock { border: 0; padding: 0; margin: 0; min-width: 0; }
+.form.is-preview { opacity: .72; }
+/* Botón eliminar en la cola del DJ */
+.btn-icon.del:hover { background: var(--danger); color: #fff; }

@@ -9,6 +9,7 @@
 
   const API = root.dataset.api;
   const STATUS_URL = root.dataset.statusUrl; // termina en /0/status/
+  const DELETE_URL = root.dataset.deleteUrl; // termina en /0/delete/
   const POLL_MS = Number(root.dataset.poll || 8) * 1000;
   const csrf = document.querySelector("[name=csrfmiddlewaretoken]")?.value;
 
@@ -226,6 +227,19 @@
       copyBtn.textContent = ok ? "✓ Copiado" : "No se pudo copiar";
       copyBtn.classList.toggle("copied", ok);
       setTimeout(() => { copyBtn.textContent = label; copyBtn.classList.remove("copied"); }, 1500);
+      return;
+    }
+    const delBtn = e.target.closest("[data-delete]");
+    if (delBtn) {
+      const li = delBtn.closest(".queue-item");
+      const title = li.querySelector(".q-title").textContent;
+      if (!confirm(`¿Eliminar "${title}" de la playlist? La persona recupera ese cupo. No se puede deshacer.`)) return;
+      li.style.opacity = ".4";
+      const res = await fetch(DELETE_URL.replace("/0/", `/${li.dataset.id}/`), {
+        method: "POST", headers: { "X-CSRFToken": csrf },
+      });
+      if (res.ok) li.remove(); else { li.style.opacity = ""; alert("No se pudo eliminar (¿es de otro DJ?)."); }
+      load();
       return;
     }
     const btn = e.target.closest("[data-action]");

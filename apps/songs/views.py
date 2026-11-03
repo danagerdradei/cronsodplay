@@ -2,7 +2,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_http_methods
 
-from apps.accounts.session import current_guest, guest_required, logout_guest
+from django.contrib import messages
+
+from apps.accounts.session import current_guest, guest_required, is_staff_preview, logout_guest
 from apps.core.net import get_client_ip
 from apps.venues.models import Venue
 
@@ -59,7 +61,7 @@ def _limit_page(request, email, reason, device_id, venue=None, event=None):
 
 
 @require_http_methods(["GET", "POST"])
-@guest_required
+@guest_required(allow_staff_preview=True)
 def request_song(request, venue_slug=None, event=None):
     """Formulario de pedido. Con `event` (link/QR del evento) la discoteca y el cupo salen del evento."""
     if event is not None:
@@ -75,6 +77,11 @@ def request_song(request, venue_slug=None, event=None):
 
 def _request_song(request, venue, device_id, event=None):
     google_guest = current_guest(request)
+    staff_preview = is_staff_preview(request)
+    if staff_preview and request.method == "POST":
+        # El DJ/Admin solo mira: los pedidos los hace el público con su cuenta de Google.
+        messages.info(request, "Estás en la vista de público: los pedidos los hace el público con su cuenta.")
+        return redirect(request.get_full_path())
     initial, known_guest = _initial_from_session(request)
     if google_guest is not None:
         known_guest = google_guest
@@ -134,7 +141,7 @@ def _request_song(request, venue, device_id, event=None):
             form.lock_identity(known_guest)
 
     left = remaining(known_guest.email if known_guest else None, device_id, event)
-    if request.method == "GET" and left == 0:
+    if request.method == "GET" and left == 0 and not staff_preview:
         email_left = remaining_for_email(known_guest.email, event) if known_guest else 1
         reason = "email" if email_left == 0 else "device"
         return _limit_page(request, known_guest.email if known_guest else "", reason, device_id, venue, event)
@@ -155,7 +162,7 @@ def _request_song(request, venue, device_id, event=None):
         request,
         "songs/request_form.html",
         {"form": form, "venue": venue, "event": event, "known_guest": known_guest, "remaining": left,
-         "experience": experience, **_quota(event)},
+         "experience": experience, "staff_preview": staff_preview, **_quota(event)},
     )
 
 

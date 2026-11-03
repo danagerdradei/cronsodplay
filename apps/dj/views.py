@@ -207,3 +207,17 @@ def reset_guest_limit(request, guest_id):
     if request.POST.get("q"):
         params["q"] = request.POST["q"]
     return redirect(f"{reverse('dj:limits')}?{urlencode(params)}")
+
+
+
+@require_POST
+@dj_api_required
+def api_delete_request(request, pk):
+    """Elimina una canción de la cola. DJ: solo de sus eventos (o sin evento). Admin: cualquiera."""
+    from apps.control.permissions import is_platform_admin
+
+    song = get_object_or_404(SongRequest.objects.select_related("event"), pk=pk)
+    if not is_platform_admin(request.user) and song.event_id and song.event.dj_id != request.user.pk:
+        return JsonResponse({"error": "sin_permiso"}, status=403)
+    song.delete()  # la persona recupera ese cupo
+    return JsonResponse({"deleted": pk})

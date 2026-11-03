@@ -14,4 +14,5 @@ urlpatterns = [
     path("limites/<int:guest_id>/restablecer/", views.reset_guest_limit, name="reset_limit"),
     path("api/requests/", views.api_requests, name="api_requests"),
     path("api/requests/<int:pk>/status/", views.api_update_status, name="api_update_status"),
+    path("api/requests/<int:pk>/delete/", views.api_delete_request, name="api_delete_request"),
 ]

@@ -37,15 +37,25 @@ def login_required_for_guests():
     return settings.GOOGLE_LOGIN_REQUIRED
 
 
-def guest_required(view=None, *, json=False):
+def is_staff_preview(request):
+    """DJ o Admin con sesión, sin sesión de Google: ve las páginas del público en modo vista previa."""
+    from apps.dj.permissions import is_dj_or_admin
+
+    return current_guest(request) is None and is_dj_or_admin(request.user)
+
+
+def guest_required(view=None, *, json=False, allow_staff_preview=False):
     """
     Exige iniciar sesión con Google cuando GOOGLE_LOGIN_REQUIRED está activo.
     Vistas HTML redirigen a /entrar/?next=…; las JSON responden 401.
+    Con allow_staff_preview, el DJ/Admin pasa sin Google (la vista decide qué puede hacer).
     """
 
     def decorator(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
+            if allow_staff_preview and is_staff_preview(request):
+                return func(request, *args, **kwargs)
             if login_required_for_guests() and current_guest(request) is None:
                 if json:
                     return JsonResponse({"error": "inicia_sesion", "login_url": reverse("accounts:login")}, status=401)
