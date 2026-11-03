@@ -30,7 +30,7 @@
             {% if current_guest.picture_url %}<img class="avatar" src="{{ current_guest.picture_url }}" alt="" width="30" height="30" referrerpolicy="no-referrer">{% else %}<span class="avatar avatar-empty">{{ current_guest.first_name|first|upper }}</span>{% endif %}
             <span class="nav-name">{{ current_guest.public_name }}</span>
           </a>
-        {% elif GOOGLE_LOGIN_REQUIRED %}
+        {% elif GOOGLE_LOGIN_REQUIRED and not user.is_authenticated %}
           <a class="btn btn-primary btn-sm" href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">Entrar</a>
         {% endif %}
         {% if user.is_authenticated and is_platform_admin %}
